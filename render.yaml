@@ -1,0 +1,20 @@
+# Render Blueprint — one-click deploy of Dosti Chat (free tier)
+# NOTE: Render's free tier has no persistent disk, so chat history + uploads
+# reset when the service restarts/redeploys. For permanent storage, attach a
+# paid persistent disk and set DATA_DIR/UPLOAD_DIR to it.
+services:
+  - type: web
+    name: dosti-chat
+    runtime: node
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: 24
+      # Optional: point these at a persistent disk mount path if you add one
+      # - key: DATA_DIR
+      #   value: /var/data
+      # - key: UPLOAD_DIR
+      #   value: /var/data/uploads
+      # Optional TURN (for strict networks): TURN_URLS, TURN_USER, TURN_PASS

@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0f1420">
+<title>Dosti Chat</title>
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<script src="/lock.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, 'Segoe UI', Roboto, sans-serif; background: #0f1420; color: #eef1f6; height: 100dvh; display: flex; flex-direction: column; }
+  .screen { display: none; flex: 1; flex-direction: column; min-height: 0; }
+  .screen.active { display: flex; }
+
+  /* ---------- lock screen ---------- */
+  #lock-screen { display: none; position: fixed; inset: 0; background: #0f1420; z-index: 100; align-items: center; justify-content: center; padding: 24px; }
+  #lock-screen.show { display: flex; }
+  .lock-box { text-align: center; width: 100%; max-width: 300px; }
+  .lock-icon { font-size: 52px; margin-bottom: 8px; }
+  .lock-box h2 { margin-bottom: 4px; }
+  .lock-box p { color: #9aa6bd; font-size: 14px; margin-bottom: 18px; }
+  #pin-dots { display: flex; gap: 14px; justify-content: center; margin-bottom: 22px; }
+  #pin-dots span { width: 16px; height: 16px; border-radius: 50%; border: 2px solid #4f7cff; }
+  #pin-dots span.on { background: #4f7cff; }
+  #pin-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  #pin-pad button { background: #18202f; color: #fff; border: 1px solid #2b3650; border-radius: 50%; width: 72px; height: 72px; font-size: 24px; cursor: pointer; margin: 0 auto; }
+  #pin-pad button:active { background: #2b3650; }
+  #pin-pad.disabled button { opacity: .35; pointer-events: none; }
+  #lock-err { color: #ff7b7b; font-size: 14px; min-height: 22px; margin-top: 14px; }
+  #lock-cool { color: #fbbf24; font-size: 15px; min-height: 22px; font-weight: 600; }
+  .link-btn { background: none; border: none; color: #5c6a88; font-size: 13px; margin-top: 18px; cursor: pointer; text-decoration: underline; }
+
+  /* ---------- join screen ---------- */
+  #join-screen { align-items: center; justify-content: center; padding: 24px; overflow-y: auto; }
+  .card { background: #18202f; border-radius: 16px; padding: 28px; width: 100%; max-width: 380px; box-shadow: 0 8px 32px rgba(0,0,0,.4); }
+  .card h1 { font-size: 28px; margin-bottom: 6px; }
+  .card p { color: #9aa6bd; font-size: 14px; margin-bottom: 20px; }
+  .card input { width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid #2b3650; background: #0f1420; color: #fff; font-size: 16px; margin-bottom: 12px; outline: none; }
+  .card input:focus { border-color: #4f7cff; }
+  .btn { width: 100%; padding: 13px; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; margin-bottom: 10px; }
+  .btn-primary { background: #4f7cff; color: #fff; }
+  .btn-primary:active { background: #3d63d6; }
+  .btn-ghost { background: #232d45; color: #dbe2f0; }
+  .btn-danger { background: #7f1d1d; color: #fecaca; }
+  .divider { text-align: center; color: #5c6a88; font-size: 13px; margin: 14px 0; position: relative; }
+  .divider::before, .divider::after { content: ''; position: absolute; top: 50%; width: 38%; height: 1px; background: #2b3650; }
+  .divider::before { left: 0; } .divider::after { right: 0; }
+  #join-error { color: #ff7b7b; font-size: 14px; min-height: 20px; margin-bottom: 8px; text-align: center; }
+  .avatar-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  .avatar-grid button { background: #0f1420; border: 2px solid #2b3650; border-radius: 10px; font-size: 24px; width: 46px; height: 46px; cursor: pointer; }
+  .avatar-grid button.sel { border-color: #4f7cff; background: #1c2740; }
+  .avatar-label { color: #9aa6bd; font-size: 13px; margin-bottom: 8px; display: block; }
+  .lock-settings { margin-top: 18px; padding-top: 16px; border-top: 1px solid #2b3650; }
+  .lock-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 15px; }
+  .lock-row .st { color: #9aa6bd; font-size: 13px; }
+  #lock-msg { font-size: 13px; min-height: 18px; color: #4ade80; margin-top: 6px; }
+  .lock-settings .row2 { display: flex; gap: 8px; }
+  .lock-settings .row2 .btn { margin-bottom: 8px; }
+
+  /* ---------- room screen ---------- */
+  #room-header { background: #18202f; padding: 10px 14px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #232d45; flex-wrap: wrap; }
+  #room-header .code { background: #0f1420; border: 1px dashed #4f7cff; color: #9db4ff; padding: 6px 12px; border-radius: 8px; font-weight: 700; letter-spacing: 2px; }
+  #room-header .spacer { flex: 1; }
+  .icon-btn { background: #232d45; color: #dbe2f0; border: none; border-radius: 8px; padding: 8px 12px; font-size: 14px; cursor: pointer; }
+  #peers { display: flex; gap: 8px; padding: 8px 14px; overflow-x: auto; background: #131a29; border-bottom: 1px solid #232d45; }
+  .peer { background: #232d45; border-radius: 10px; padding: 8px 10px; display: flex; align-items: center; gap: 8px; white-space: nowrap; font-size: 14px; }
+  .peer .dot { width: 8px; height: 8px; border-radius: 50%; background: #4ade80; flex-shrink: 0; }
+  .peer .dot.off { background: #5c6a88; }
+  .peer .ls { color: #5c6a88; font-size: 11px; }
+  .peer button { background: #4f7cff; color: #fff; border: none; border-radius: 6px; padding: 5px 9px; font-size: 13px; cursor: pointer; }
+  .peer button.voice { background: #16a34a; }
+  #peers-empty { color: #5c6a88; font-size: 13px; padding: 4px 2px; }
+
+  #videos { display: none; gap: 8px; padding: 8px 14px; background: #000; flex-wrap: wrap; }
+  #videos.show { display: flex; }
+  #local-video { width: 110px; height: 150px; border-radius: 10px; background: #111; object-fit: cover; }
+  #remote-videos { display: flex; gap: 8px; flex-wrap: wrap; flex: 1; }
+  .rv { position: relative; }
+  .rv video { width: 160px; height: 200px; border-radius: 10px; background: #111; object-fit: cover; }
+  .rv .tag { position: absolute; bottom: 6px; left: 6px; background: rgba(0,0,0,.6); font-size: 11px; padding: 2px 8px; border-radius: 6px; }
+  #call-bar { display: none; align-items: center; justify-content: center; gap: 12px; padding: 10px; background: #1a0f14; }
+  #call-bar.show { display: flex; }
+  #call-status { font-size: 14px; color: #ffb3b3; }
+  #hangup-btn { background: #dc2626; color: #fff; border: none; border-radius: 50%; width: 52px; height: 52px; font-size: 22px; cursor: pointer; }
+
+  #typing { font-size: 12px; color: #9db4ff; padding: 2px 16px; min-height: 20px; font-style: italic; }
+  #messages { flex: 1; overflow-y: auto; padding: 6px 14px 14px; display: flex; flex-direction: column; gap: 8px; }
+  .msg { max-width: 82%; padding: 9px 13px; border-radius: 14px; font-size: 15px; line-height: 1.4; word-wrap: break-word; }
+  .msg .who { display: flex; align-items: center; gap: 5px; font-size: 11px; opacity: .75; margin-bottom: 3px; }
+  .msg .ticks { margin-left: auto; font-size: 12px; }
+  .msg .ticks.seen { color: #7dd3fc; }
+  .msg.mine { align-self: flex-end; background: #4f7cff; color: #fff; border-bottom-right-radius: 4px; }
+  .msg.theirs { align-self: flex-start; background: #232d45; border-bottom-left-radius: 4px; }
+  .msg.sys { align-self: center; background: transparent; color: #5c6a88; font-size: 12px; }
+  .msg .body img { max-width: 100%; border-radius: 10px; display: block; margin-top: 4px; }
+  .msg .body audio { width: 210px; margin-top: 4px; }
+  .msg .body.deleted { font-style: italic; opacity: .7; }
+  .msg .quote { border-left: 3px solid #9db4ff; padding: 4px 8px; margin-bottom: 6px; font-size: 12px; opacity: .85; background: rgba(0,0,0,.18); border-radius: 6px; }
+  .msg .edited-tag { font-size: 10px; opacity: .6; margin-top: 2px; }
+  .msg .actions { display: flex; gap: 6px; margin-top: 6px; }
+  .msg .actions button { background: rgba(0,0,0,.25); color: inherit; border: none; border-radius: 6px; font-size: 12px; padding: 3px 8px; cursor: pointer; }
+  #reply-bar, #edit-bar { display: none; align-items: center; gap: 8px; background: #1c2740; padding: 8px 14px; font-size: 13px; border-top: 1px solid #2b3650; }
+  #reply-bar.show, #edit-bar.show { display: flex; }
+  #reply-text { flex: 1; color: #9db4ff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #chat-bar { display: flex; gap: 8px; padding: 10px 14px calc(10px + env(safe-area-inset-bottom)); background: #18202f; border-top: 1px solid #232d45; align-items: center; }
+  #chat-input { flex: 1; padding: 12px 14px; border-radius: 22px; border: 1px solid #2b3650; background: #0f1420; color: #fff; font-size: 16px; outline: none; }
+  .mini-btn { background: #232d45; color: #dbe2f0; border: none; border-radius: 50%; width: 42px; height: 42px; font-size: 18px; cursor: pointer; flex-shrink: 0; }
+  .mini-btn.rec { background: #dc2626; color: #fff; }
+  #send-btn { background: #4f7cff; color: #fff; border: none; border-radius: 50%; width: 46px; height: 46px; font-size: 18px; cursor: pointer; flex-shrink: 0; }
+
+  /* incoming call modal */
+  #call-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.75); align-items: center; justify-content: center; z-index: 50; padding: 24px; }
+  #call-modal.show { display: flex; }
+  #call-modal .card { text-align: center; }
+  #call-modal h2 { margin-bottom: 4px; }
+  #call-modal p { margin-bottom: 20px; }
+  #call-modal .row { display: flex; gap: 10px; }
+  #accept-btn { background: #16a34a; color: #fff; }
+  #decline-btn { background: #dc2626; color: #fff; }
+  .hidden-input { display: none; }
+</style>
+</head>
+<body>
+
+<!-- APP LOCK -->
+<div id="lock-screen">
+  <div class="lock-box">
+    <div class="lock-icon">🔒</div>
+    <h2>Dosti Chat</h2>
+    <p id="lock-sub">PIN likho</p>
+    <div id="pin-dots"><span></span><span></span><span></span><span></span></div>
+    <div id="pin-pad">
+      <button data-d="1">1</button><button data-d="2">2</button><button data-d="3">3</button>
+      <button data-d="4">4</button><button data-d="5">5</button><button data-d="6">6</button>
+      <button data-d="7">7</button><button data-d="8">8</button><button data-d="9">9</button>
+      <button id="pin-clear">C</button><button data-d="0">0</button><button id="pin-back">⌫</button>
+    </div>
+    <div id="lock-err"></div>
+    <div id="lock-cool"></div>
+    <button class="link-btn" id="lock-reset">PIN bhool gaye? App data reset karo</button>
+  </div>
+</div>
+
+<!-- JOIN -->
+<div id="join-screen" class="screen active">
+  <div class="card">
+    <h1>💬 Dosti Chat</h1>
+    <p>Apni private chat — sirf invite walon ke liye. 🔒 End-to-end encrypted.</p>
+    <span class="avatar-label">Apna avatar chuno:</span>
+    <div class="avatar-grid" id="avatar-grid"></div>
+    <input id="name-input" placeholder="Tumhara naam" maxlength="30" autocomplete="off">
+    <div id="join-error"></div>
+    <button class="btn btn-primary" id="create-btn">Naya room banao</button>
+    <div class="divider">ya</div>
+    <input id="code-input" placeholder="Invite code (jaise: KX7P2Q)" maxlength="6" autocomplete="off" style="text-transform:uppercase">
+    <button class="btn btn-ghost" id="join-btn">Room join karo</button>
+
+    <div class="lock-settings">
+      <div class="lock-row"><span>🔒 App Lock</span><span class="st" id="lock-state">Off</span></div>
+      <div id="lock-setup">
+        <input id="pin-new" type="password" inputmode="numeric" maxlength="4" placeholder="4-digit PIN" autocomplete="off">
+        <input id="pin-confirm" type="password" inputmode="numeric" maxlength="4" placeholder="PIN dobara likho" autocomplete="off">
+        <button class="btn btn-ghost" id="pin-set-btn">PIN set karo</button>
+      </div>
+      <div id="lock-manage" style="display:none">
+        <input id="pin-cur" type="password" inputmode="numeric" maxlength="4" placeholder="Purana PIN" autocomplete="off">
+        <input id="pin-new2" type="password" inputmode="numeric" maxlength="4" placeholder="Naya PIN" autocomplete="off">
+        <input id="pin-confirm2" type="password" inputmode="numeric" maxlength="4" placeholder="Naya PIN dobara" autocomplete="off">
+        <div class="row2">
+          <button class="btn btn-ghost" id="pin-change-btn">Change</button>
+          <button class="btn btn-danger" id="pin-remove-btn">Remove</button>
+        </div>
+      </div>
+      <div id="lock-msg"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ROOM -->
+<div id="room-screen" class="screen">
+  <div id="room-header">
+    <span class="code" id="room-code"></span>
+    <button class="icon-btn" id="copy-btn">🔗 Invite</button>
+    <button class="icon-btn" id="group-call-btn">👥 Group call</button>
+    <span class="spacer"></span>
+    <button class="icon-btn" id="lock-now-btn" title="Foran lock lagao">🔒</button>
+    <button class="icon-btn" id="leave-btn">Leave</button>
+  </div>
+  <div id="peers"><span id="peers-empty">Room mein akelay ho — invite link bhejo! 📩</span></div>
+  <div id="videos">
+    <video id="local-video" autoplay muted playsinline></video>
+    <div id="remote-videos"></div>
+  </div>
+  <div id="call-bar">
+    <span id="call-status"></span>
+    <button id="hangup-btn">📞</button>
+  </div>
+  <div id="typing"></div>
+  <div id="messages"></div>
+  <div id="reply-bar"><span id="reply-text"></span><button class="icon-btn" id="reply-cancel">✖</button></div>
+  <div id="edit-bar"><span>✏️ Edit ho raha hai</span><span class="spacer" style="flex:1"></span><button class="icon-btn" id="edit-cancel">✖</button></div>
+  <div id="chat-bar">
+    <button class="mini-btn" id="photo-btn" title="Photo bhejo">📷</button>
+    <button class="mini-btn" id="voice-btn" title="Voice note">🎤</button>
+    <input id="chat-input" placeholder="Message likho…" autocomplete="off">
+    <button id="send-btn">➤</button>
+  </div>
+</div>
+
+<!-- INCOMING CALL -->
+<div id="call-modal">
+  <div class="card">
+    <h2 id="caller-name">—</h2>
+    <p id="caller-type">call kar raha hai…</p>
+    <div class="row">
+      <button class="btn" id="decline-btn">Kaato</button>
+      <button class="btn" id="accept-btn">Uthao</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="photo-input" class="hidden-input" accept="image/*">
+
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const Lock = window.DostiLock;
+
+  /* ================= identity ================= */
+  let myUserId = localStorage.getItem('dosti_userId');
+  if (!myUserId) {
+    myUserId = 'u' + (crypto.randomUUID ? crypto.randomUUID().replace(/-/g, '') : String(Date.now()));
+    localStorage.setItem('dosti_userId', myUserId);
+  }
+  let myName = localStorage.getItem('dosti_name') || '';
+  let myAvatar = localStorage.getItem('dosti_avatar') || '😎';
+
+  const AVATARS = ['😎','🥀','🔥','🌙','⭐','🦁','🐼','🐯','🌹','💎','👑','🎧'];
+  const avatarGrid = $('avatar-grid');
+  AVATARS.forEach((a) => {
+    const b = document.createElement('button');
+    b.textContent = a;
+    if (a === myAvatar) b.classList.add('sel');
+    b.onclick = () => {
+      myAvatar = a;
+      localStorage.setItem('dosti_avatar', a);
+      avatarGrid.querySelectorAll('button').forEach((x) => x.classList.remove('sel'));
+      b.classList.add('sel');
+    };
+    avatarGrid.appendChild(b);
+  });
+  $('name-input').value = myName;
+
+  /* ================= app lock ================= */
+  const PIN_KEY = 'dosti_pin_hash';
+  let pinEntry = '', pinFails = 0, cooling = false, coolTimer = null;
+  let appStarted = false;
+
+  function drawDots() {
+    const dots = $('pin-dots').children;
+    for (let i = 0; i < dots.length; i++) dots[i].classList.toggle('on', i < pinEntry.length);
+  }
+  function lockErr(t) { $('lock-err').textContent = t; }
+  function showLock() {
+    pinEntry = ''; drawDots(); lockErr(''); $('lock-cool').textContent = '';
+    $('lock-screen').classList.add('show');
+  }
+  function hideLock() { $('lock-screen').classList.remove('show'); }
+
+  document.querySelectorAll('#pin-pad button[data-d]').forEach((b) => {
+    b.onclick = () => {
+      if (cooling || pinEntry.length >= 4) return;
+      pinEntry += b.getAttribute('data-d');
+      drawDots();
+      if (pinEntry.length === 4) setTimeout(checkPin, 150);
+    };
+  });
+  $('pin-clear').onclick = () => { pinEntry = ''; drawDots(); };
+  $('pin-back').onclick = () => { pinEntry = pinEntry.slice(0, -1); drawDots(); };
+  $('lock-reset').onclick = () => {
+    if (confirm('Saara app data (PIN, naam, identity) clear ho jayega. Pakka?')) {
+      localStorage.clear();
+      location.reload();
+    }
+  };
+
+  async function checkPin() {
+    const stored = localStorage.getItem(PIN_KEY);
+    const ok = await Lock.verifyPin(pinEntry, stored);
+    pinEntry = ''; drawDots();
+    if (ok) {
+      pinFails = 0;
+      hideLock();
+      if (!appStarted) { appStarted = true; startApp(); }
+      return;
+    }
+    pinFails++;
+    const st = Lock.nextLockoutState(pinFails);
+    if (st.lockedOut) startCooldown(st.cooldownMs);
+    else lockErr(`Ghalat PIN! ${st.triesLeft} try baqi`);
+  }
+  function startCooldown(ms) {
+    cooling = true;
+    let s = Math.ceil(ms / 1000);
+    lockErr('');
+    $('lock-cool').textContent = `${s} second ruko…`;
+    $('pin-pad').classList.add('disabled');
+    clearInterval(coolTimer);
+    coolTimer = setInterval(() => {
+      s--;
+      if (s <= 0) {
+        clearInterval(coolTimer);
+        cooling = false; pinFails = 0;
+        $('lock-cool').textContent = '';
+        $('pin-pad').classList.remove('disabled');
+      } else {
+        $('lock-cool').textContent = `${s} second ruko…`;
+      }
+    }, 1000);
+  }
+
+  function lockMsg(t) { $('lock-msg').textContent = t; }
+  function renderLockSettings() {
+    const has = !!localStorage.getItem(PIN_KEY);
+    $('lock-setup').style.display = has ? 'none' : '';
+    $('lock-manage').style.display = has ? '' : 'none';
+    $('lock-state').textContent = has ? 'On ✅' : 'Off';
+  }
+  $('pin-set-btn').onclick = async () => {
+    const a = $('pin-new').value.trim(), b = $('pin-confirm').value.trim();
+    if (!Lock.validPin(a)) return lockMsg('4-digit PIN likho (sirf number)');
+    if (a !== b) return lockMsg('Dono PIN same nahi hain');
+    localStorage.setItem(PIN_KEY, await Lock.hashPin(a));
+    $('pin-new').value = $('pin-confirm').value = '';
+    renderLockSettings();
+    lockMsg('✅ PIN lag gaya! Ab app kholte waqt PIN mangega.');
+  };
+  $('pin-change-btn').onclick = async () => {
+    const cur = $('pin-cur').value.trim(), nw = $('pin-new2').value.trim(), cf = $('pin-confirm2').value.trim();
+    if (!(await Lock.verifyPin(cur, localStorage.getItem(PIN_KEY)))) return lockMsg('Purana PIN ghalat hai');
+    if (!Lock.validPin(nw)) return lockMsg('Naya 4-digit PIN likho');
+    if (nw !== cf) return lockMsg('Naye PIN match nahi ho rahe');
+    localStorage.setItem(PIN_KEY, await Lock.hashPin(nw));
+    $('pin-cur').value = $('pin-new2').value = $('pin-confirm2').value = '';
+    lockMsg('✅ PIN change ho gaya');
+  };
+  $('pin-remove-btn').onclick = async () => {
+    const cur = $('pin-cur').value.trim();
+    if (!(await Lock.verifyPin(cur, localStorage.getItem(PIN_KEY)))) return lockMsg('PIN ghalat hai');
+    localStorage.removeItem(PIN_KEY);
+    $('pin-cur').value = '';
+    renderLockSettings();
+    lockMsg('🔓 PIN hata diya');
+  };
+
+  /* ================= main app (starts after unlock) ================= */
+  let ws = null, roomCode = null, roomKey = null, ICE = null;
+  let peers = new Map();          // userId -> {name, avatar, online}
+  let members = [];               // offline members [{userId,name,avatar,lastSeen}]
+  const msgs = new Map();         // id -> msg
+  const decCache = new Map();     // id -> plaintext | {file, mime}
+  const mediaCache = new Map();   // file -> blobURL
+  const pending = new Map();      // cid -> {kind, text} | {kind:'photo'|'audio', file, mime, blobUrl}
+  const ticks = new Map();        // userId -> upToTs
+  const typingMap = new Map();    // userId -> name
+  let cidSeq = 1;
+  let replyToId = null, editingId = null;
+
+  // 1:1 call state
+  let pc = null, localStream = null, callPeer = null, callVideo = false, pendingOffer = null;
+  // group call state (full mesh)
+  let group = null, pendingGroup = null;   // group = {video, stream, pcs: Map(userId -> {pc})}
+
+  const messagesEl = $('messages'), chatInput = $('chat-input');
+  const videosEl = $('videos'), localVideo = $('local-video'), remoteVideos = $('remote-videos');
+  const callBar = $('call-bar'), callStatus = $('call-status');
+  const callModal = $('call-modal');
+
+  function startApp() {
+    renderLockSettings();
+    wireUI();
+    registerSW();
+    const q = new URLSearchParams(location.search).get('room');
+    if (q) $('code-input').value = q.toUpperCase();
+    connect();
+  }
+
+  /* ---------- E2E crypto (room key) ---------- */
+  async function ensureKey(code) {
+    const km = await crypto.subtle.importKey('raw', new TextEncoder().encode(code), 'PBKDF2', false, ['deriveKey']);
+    roomKey = await crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt: new TextEncoder().encode('dosti-chat-v1'), iterations: 100000, hash: 'SHA-256' },
+      km, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+  }
+  function b64e(buf) {
+    const b = new Uint8Array(buf); let s = '';
+    for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000));
+    return btoa(s);
+  }
+  function b64d(s) {
+    const bin = atob(s); const b = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) b[i] = bin.charCodeAt(i);
+    return b.buffer;
+  }
+  async function encText(t) {
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, roomKey, new TextEncoder().encode(t));
+    const out = new Uint8Array(12 + ct.byteLength);
+    out.set(iv); out.set(new Uint8Array(ct), 12);
+    return b64e(out.buffer);
+  }
+  async function decText(p) {
+    const b = new Uint8Array(b64d(p));
+    const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b.slice(0, 12) }, roomKey, b.slice(12));
+    return new TextDecoder().decode(pt);
+  }
+  async function encRaw(ab) {
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, roomKey, ab);
+    const out = new Uint8Array(12 + ct.byteLength);
+    out.set(iv); out.set(new Uint8Array(ct), 12);
+    return out.buffer;
+  }
+  async function decRaw(ab) {
+    const b = new Uint8Array(ab);
+    return crypto.subtle.decrypt({ name: 'AES-GCM', iv: b.slice(0, 12) }, roomKey, b.slice(12));
+  }
+  async function getText(m) {
+    if (decCache.has(m.id)) return decCache.get(m.id);
+    try {
+      const t = await decText(m.payload);
+      decCache.set(m.id, t);
+      return t;
+    } catch { return '🔒 (khul nahi saka)'; }
+  }
+
+  /* ---------- websocket ---------- */
+  function connect() {
+    const proto = location.protocol === 'https:' ? 'wss://' : 'ws://';
+    ws = new WebSocket(proto + location.host + '/ws');
+    ws.onmessage = (ev) => { onMsg(ev).catch((e) => console.warn(e)); };
+    ws.onclose = () => setTimeout(() => { if ($('room-screen').classList.contains('active')) connect(); }, 2000);
+  }
+  function send(o) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(o)); }
+
+  function sys(text) {
+    const d = document.createElement('div');
+    d.className = 'msg sys'; d.textContent = text;
+    messagesEl.appendChild(d); scrollBottom();
+  }
+  function scrollBottom() { messagesEl.scrollTop = messagesEl.scrollHeight; }
+  function fmtTime(ts) {
+    return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+
+  async function quoteSnippet(m) {
+    const orig = msgs.get(m.replyTo);
+    if (!orig) return '…';
+    if (orig.deleted) return '🗑 deleted message';
+    if (orig.kind === 'photo') return '📷 photo';
+    if (orig.kind === 'audio') return '🎤 voice note';
+    const t = await getText(orig);
+    return (orig.from === myUserId ? 'Tum' : orig.name) + ': ' + String(t).slice(0, 60);
+  }
+
+  async function mediaNode(m) {
+    const wrap = document.createElement('div');
+    try {
+      let meta = decCache.get(m.id);
+      if (!meta || typeof meta === 'string') {
+        meta = JSON.parse(await decText(m.payload));
+        decCache.set(m.id, meta);
+      }
+      if (!meta || !/^[0-9a-f]{32}$/.test(meta.file)) throw new Error('bad meta');
+      let url = mediaCache.get(meta.file);
+      if (!url) {
+        const r = await fetch(`/uploads/${roomCode}/${meta.file}`);
+        if (!r.ok) throw new Error('dl fail');
+        const pt = await decRaw(await r.arrayBuffer());
+        url = URL.createObjectURL(new Blob([pt], { type: meta.mime || 'application/octet-stream' }));
+        mediaCache.set(meta.file, url);
+      }
+      if (m.kind === 'photo') {
+        const img = document.createElement('img');
+        img.src = url; img.loading = 'lazy'; img.alt = 'photo';
+        return img;
+      }
+      const a = document.createElement('audio');
+      a.controls = true; a.src = url;
+      return a;
+    } catch {
+      wrap.textContent = '📎 file khul nahi saki';
+      return wrap;
+    }
+  }
+
+  async function renderMessage(m) {
+    msgs.set(m.id, m);
+    let el = document.getElementById('m' + m.id);
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'm' + m.id;
+      // sorted insert by (ts, id)
+      let placed = false;
+      for (const c of messagesEl.children) {
+        if (!c.id || c.id[0] !== 'm') continue;
+        const om = msgs.get(Number(c.id.slice(1)));
+        if (om && (om.ts > m.ts || (om.ts === m.ts && om.id > m.id))) {
+          messagesEl.insertBefore(el, c); placed = true; break;
+        }
+      }
+      if (!placed) messagesEl.appendChild(el);
+    }
+    const mine = m.from === myUserId;
+    el.className = 'msg ' + (mine ? 'mine' : 'theirs');
+    el.innerHTML = '';
+    const who = document.createElement('div'); who.className = 'who';
+    who.append(document.createTextNode((m.avatar || '') + ' ' + (mine ? 'Tum' : m.name) + ' • ' + fmtTime(m.ts) + ' '));
+    if (mine) {
+      const t = document.createElement('span');
+      t.className = 'ticks'; t.dataset.ts = m.ts; t.textContent = '✓';
+      who.appendChild(t);
+    }
+    el.appendChild(who);
+    if (m.replyTo) {
+      const q = document.createElement('div'); q.className = 'quote';
+      q.textContent = await quoteSnippet(m);
+      el.appendChild(q);
+    }
+    const body = document.createElement('div'); body.className = 'body';
+    if (m.deleted) {
+      body.textContent = '🗑 Ye message delete kar diya gaya';
+      body.classList.add('deleted');
+    } else if (m.kind === 'text') {
+      body.textContent = await getText(m);
+    } else {
+      body.appendChild(await mediaNode(m));
+    }
+    el.appendChild(body);
+    if (m.edited && !m.deleted) {
+      const e = document.createElement('div'); e.className = 'edited-tag'; e.textContent = '(edited)';
+      el.appendChild(e);
+    }
+    const acts = document.createElement('div'); acts.className = 'actions';
+    const rb = document.createElement('button'); rb.textContent = '↩ Reply';
+    rb.onclick = (ev) => { ev.stopPropagation(); setReply(m.id); };
+    acts.appendChild(rb);
+    if (mine && !m.deleted) {
+      const eb = document.createElement('button'); eb.textContent = '✏️';
+      eb.onclick = (ev) => { ev.stopPropagation(); startEdit(m.id); };
+      const db = document.createElement('button'); db.textContent = '🗑';
+      db.onclick = (ev) => { ev.stopPropagation(); if (confirm('Ye message delete kar dun?')) send({ type: 'delete', id: m.id }); };
+      acts.appendChild(eb); acts.appendChild(db);
+    }
+    el.appendChild(acts);
+    updateTicks();
+    scrollBottom();
+  }
+
+  /* ---------- ticks ---------- */
+  function updateTicks() {
+    const others = [...peers.keys()].filter((id) => id !== myUserId);
+    document.querySelectorAll('.ticks').forEach((el) => {
+      const ts = Number(el.dataset.ts);
+      let txt = '✓', seen = false;
+      if (others.length && others.every((id) => (ticks.get(id) || 0) >= ts)) { txt = '✓✓'; seen = true; }
+      el.textContent = txt;
+      el.classList.toggle('seen', seen);
+    });
+  }
+  function sendRead() {
+    if (roomCode && document.visibilityState === 'visible') send({ type: 'read', upToTs: Date.now() });
+  }
+
+  /* ---------- typing ---------- */
+  let typingTimer = null, typingSent = false;
+  function sendTyping(v) {
+    if (typingSent === v) return;
+    typingSent = v;
+    send({ type: 'typing', typing: v });
+  }
+  function renderTyping() {
+    const names = [...typingMap.values()];
+    $('typing').textContent = !names.length ? ''
+      : names.length === 1 ? `${names[0]} likh raha hai…`
+      : `${names.join(', ')} likh rahe hain…`;
+  }
+
+  /* ---------- presence ---------- */
+  function lastSeenText(ts) {
+    const d = Date.now() - ts;
+    if (d < 60000) return 'abhi active tha';
+    if (d < 3600000) return Math.floor(d / 60000) + ' min pehle';
+    if (d < 86400000) return Math.floor(d / 3600000) + ' ghante pehle';
+    return new Date(ts).toLocaleDateString();
+  }
+  function renderPeers() {
+    document.querySelectorAll('#peers .peer').forEach((e) => e.remove());
+    const online = [...peers.entries()].filter(([id]) => id !== myUserId);
+    const offline = members.filter((x) => x.userId !== myUserId && !peers.has(x.userId));
+    $('peers-empty').style.display = (online.length || offline.length) ? 'none' : '';
+    for (const [id, p] of online) {
+      const d = document.createElement('div'); d.className = 'peer';
+      d.innerHTML = '';
+      const dot = document.createElement('span'); dot.className = 'dot'; d.appendChild(dot);
+      d.appendChild(document.createTextNode(`${p.avatar} ${p.name} `));
+      const vv = document.createElement('button'); vv.textContent = '📹'; vv.title = 'Video call';
+      vv.onclick = () => startCall(id, true);
+      const av = document.createElement('button'); av.textContent = '📞'; av.title = 'Voice call'; av.className = 'voice';
+      av.onclick = () => startCall(id, false);
+      d.appendChild(vv); d.appendChild(av);
+      $('peers').appendChild(d);
+    }
+    for (const x of offline) {
+      const d = document.createElement('div'); d.className = 'peer';
+      const dot = document.createElement('span'); dot.className = 'dot off'; d.appendChild(dot);
+      const s = document.createElement('span');
+      s.innerHTML = '';
+      s.appendChild(document.createTextNode(`${x.avatar} ${x.name} `));
+      const ls = document.createElement('span'); ls.className = 'ls'; ls.textContent = lastSeenText(x.lastSeen);
+      s.appendChild(ls);
+      d.appendChild(s);
+      $('peers').appendChild(d);
+    }
+  }
+
+  /* ---------- room enter ---------- */
+  async function enterRoom(code) {
+    roomCode = code;
+    await ensureKey(code);   // E2E key ready before any decrypt
+    $('room-code').textContent = code;
+    $('join-screen').classList.remove('active');
+    $('room-screen').classList.add('active');
+    const link = location.origin + location.pathname + '?room=' + code;
+    $('copy-btn').onclick = () => {
+      navigator.clipboard.writeText(link).then(() => {
+        $('copy-btn').textContent = '✅ Copied!';
+        setTimeout(() => $('copy-btn').textContent = '🔗 Invite', 1500);
+      });
+    };
+    setupPush();
+  }
+
+  async function onMsg(ev) {
+    let m;
+    try { m = JSON.parse(ev.data); } catch { return; }
+
+    if (m.type === 'room-created' || m.type === 'joined') {
+      await enterRoom(m.roomCode);
+      peers = new Map();
+      peers.set(myUserId, { name: myName, avatar: myAvatar, online: true });
+      for (const p of (m.peers || [])) peers.set(p.id, { name: p.name, avatar: p.avatar, online: true });
+      members = m.members || [];
+      ticks.clear(); typingMap.clear(); renderTyping();
+      messagesEl.innerHTML = ''; msgs.clear(); decCache.clear();
+      for (const h of (m.history || [])) await renderMessage(h);
+      sys('Room mein aa gaye ho 🎉 — invite link doston ko bhejo.');
+      renderPeers();
+      sendRead();
+    } else if (m.type === 'error') {
+      $('join-error').textContent = m.message;
+    } else if (m.type === 'kicked') {
+      alert(m.message || 'Dusri tab se connect ho gaye ho.');
+      location.reload();
+    } else if (m.type === 'chat') {
+      // sender's own echo: reuse local plaintext/blob instead of re-decrypting
+      const p = m.cid && pending.get(m.cid);
+      if (p) {
+        pending.delete(m.cid);
+        if (p.kind === 'text') decCache.set(m.id, p.text);
+        else { decCache.set(m.id, { file: p.file, mime: p.mime }); mediaCache.set(p.file, p.blobUrl); }
+      }
+      await renderMessage(m);
+      sendRead();
+    } else if (m.type === 'edit') {
+      const o = msgs.get(m.id);
+      if (o) { o.payload = m.payload; o.edited = true; decCache.delete(m.id); await renderMessage(o); }
+    } else if (m.type === 'delete') {
+      const o = msgs.get(m.id);
+      if (o) { o.deleted = true; o.payload = 'deleted'; decCache.delete(m.id); await renderMessage(o); }
+    } else if (m.type === 'typing') {
+      if (m.typing) typingMap.set(m.from, m.name); else typingMap.delete(m.from);
+      renderTyping();
+    } else if (m.type === 'ticks') {
+      ticks.set(m.userId, Math.max(ticks.get(m.userId) || 0, m.upToTs));
+      updateTicks();
+    } else if (m.type === 'peer-joined') {
+      peers.set(m.id, { name: m.name, avatar: m.avatar, online: true });
+      members = members.filter((x) => x.userId !== m.id);
+      renderPeers(); sys(`${m.avatar} ${m.name} aa gaya 👋`);
+    } else if (m.type === 'peer-left') {
+      const p = peers.get(m.id);
+      peers.delete(m.id); typingMap.delete(m.id); renderTyping();
+      if (p) {
+        members.unshift({ userId: m.id, name: p.name, avatar: p.avatar, lastSeen: m.lastSeen || Date.now() });
+        sys(`${p.avatar} ${p.name} chala gaya 👋`);
+      }
+      renderPeers(); updateTicks();
+      removeGroupPeer(m.id, true);
+      if (callPeer === m.id) endCall('Samne wala chala gaya');
+    } else if (m.type === 'signal') {
+      onSignal(m.from, m.name, m.data);
+    } else if (m.type === 'left') {
+      location.reload();
+    }
+  }
+
+  /* ================= calls ================= */
+  async function getIce() {
+    if (!ICE) {
+      const c = await (await fetch('/config')).json();
+      ICE = { iceServers: c.iceServers };
+    }
+    return ICE;
+  }
+  function showVideos() { videosEl.classList.add('show'); }
+  function hideVideos() {
+    videosEl.classList.remove('show');
+    localVideo.srcObject = null;
+    remoteVideos.innerHTML = '';
+  }
+  function ensureRemoteVideo(uid, name) {
+    let w = document.getElementById('rv-' + uid);
+    if (!w) {
+      w = document.createElement('div'); w.className = 'rv'; w.id = 'rv-' + uid;
+      const v = document.createElement('video');
+      v.autoplay = true; v.playsInline = true;
+      const tag = document.createElement('div'); tag.className = 'tag'; tag.textContent = name || uid;
+      w.appendChild(v); w.appendChild(tag);
+      remoteVideos.appendChild(w);
+    }
+    return w.querySelector('video');
+  }
+  function removeRemoteVideo(uid) {
+    const w = document.getElementById('rv-' + uid);
+    if (w) w.remove();
+  }
+  function showCallUI(status) { callStatus.textContent = status; callBar.classList.add('show'); }
+  function hideCallUI() { callBar.classList.remove('show'); }
+
+  /* ----- 1:1 call (v0.1 flow, ICE from /config) ----- */
+  async function startCall(peerId, video) {
+    if (pc || group) { alert('Pehle wali call khatam karo.'); return; }
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: video ? { facingMode: 'user' } : false });
+    } catch { alert('Mic/camera ki permission do 📷🎤'); return; }
+    localStream = stream; callPeer = peerId; callVideo = video;
+    pc = new RTCPeerConnection(await getIce());
+    pc.onicecandidate = (e) => {
+      if (e.candidate && callPeer) send({ type: 'signal', to: callPeer, data: { kind: 'ice', candidate: e.candidate } });
+    };
+    pc.ontrack = (e) => { ensureRemoteVideo(callPeer, peers.get(callPeer)?.name).srcObject = e.streams[0]; };
+    pc.onconnectionstatechange = () => {
+      if (pc && (pc.connectionState === 'failed' || pc.connectionState === 'disconnected')) endCall('Connection toot gaya');
+    };
+    stream.getTracks().forEach((t) => pc.addTrack(t, stream));
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+    send({ type: 'signal', to: peerId, data: { kind: 'offer', sdp: offer.sdp, video } });
+    showVideos(); localVideo.srcObject = stream;
+    showCallUI('Call lag rahi hai… ' + (peers.get(peerId)?.name || ''));
+  }
+  function endCall(reason) {
+    if (callPeer) send({ type: 'signal', to: callPeer, data: { kind: 'hangup' } });
+    callPeer = null;
+    if (pc) { try { pc.close(); } catch {} pc = null; }
+    if (localStream && !group) { localStream.getTracks().forEach((t) => t.stop()); localStream = null; }
+    if (!group) hideVideos();
+    hideCallUI();
+    if (reason) sys(reason);
+  }
+
+  /* ----- group call (full mesh) ----- */
+  async function startGroupCall(video) {
+    if (pc || group) { alert('Pehle wali call khatam karo.'); return; }
+    const others = [...peers.keys()].filter((id) => id !== myUserId);
+    if (!others.length) { alert('Room mein koi aur online nahi hai'); return; }
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: video ? { facingMode: 'user' } : false });
+    } catch { alert('Mic/camera ki permission do 📷🎤'); return; }
+    group = { video, stream, pcs: new Map() };
+    showVideos(); localVideo.srcObject = stream;
+    showCallUI(`Group call lag rahi hai… (${others.length} ko bula rahe hain)`);
+    for (const uid of others) groupOffer(uid).catch((e) => console.warn(e));
+  }
+  async function groupOffer(uid) {
+    const pcx = new RTCPeerConnection(await getIce());
+    wireGroupPC(pcx, uid);
+    group.stream.getTracks().forEach((t) => pcx.addTrack(t, group.stream));
+    const offer = await pcx.createOffer();
+    await pcx.setLocalDescription(offer);
+    group.pcs.set(uid, { pc: pcx });
+    send({ type: 'signal', to: uid, data: { kind: 'offer', sdp: offer.sdp, video: group.video, group: true } });
+  }
+  function wireGroupPC(pcx, uid) {
+    pcx.onicecandidate = (e) => {
+      if (e.candidate && group) send({ type: 'signal', to: uid, data: { kind: 'ice', candidate: e.candidate, group: true } });
+    };
+    pcx.ontrack = (e) => {
+      ensureRemoteVideo(uid, peers.get(uid)?.name || uid).srcObject = e.streams[0];
+      updateGroupStatus();
+    };
+    pcx.onconnectionstatechange = () => {
+      if (['failed', 'disconnected', 'closed'].includes(pcx.connectionState)) removeGroupPeer(uid);
+    };
+  }
+  function updateGroupStatus() {
+    if (!group) return;
+    showCallUI(`👥 Group call — ${group.pcs.size + 1} log`);
+  }
+  function removeGroupPeer(uid, silent) {
+    if (!group) return;
+    const g = group.pcs.get(uid);
+    if (g) { try { g.pc.close(); } catch {} group.pcs.delete(uid); }
+    removeRemoteVideo(uid);
+    if (!group.pcs.size) { endGroupCall(silent ? null : 'Group call khatam'); }
+    else updateGroupStatus();
+  }
+  function endGroupCall(reason) {
+    if (group) {
+      for (const [uid, g] of group.pcs) {
+        try { send({ type: 'signal', to: uid, data: { kind: 'hangup', group: true } }); } catch {}
+        try { g.pc.close(); } catch {}
+      }
+      if (group.stream) group.stream.getTracks().forEach((t) => t.stop());
+      group = null;
+    }
+    if (!pc) hideVideos();
+    hideCallUI();
+    if (reason) sys(reason);
+  }
+
+  async function onSignal(from, name, d) {
+    if (!d) return;
+    if (d.kind === 'offer') {
+      if (d.group) {
+        if ((group && group.pcs.has(from)) || pc) {
+          send({ type: 'signal', to: from, data: { kind: 'decline', group: true } });
+          return;
+        }
+        pendingGroup = { from, name, sdp: d.sdp, video: !!d.video };
+        pendingOffer = null;
+        $('caller-name').textContent = `${name} 👥`;
+        $('caller-type').textContent = `group ${(d.video ? 'video' : 'voice')} call mein bula raha hai…`;
+        callModal.classList.add('show');
+        return;
+      }
+      // 1:1 offer
+      if (pc || group) { send({ type: 'signal', to: from, data: { kind: 'decline' } }); return; }
+      pendingOffer = { from, name, sdp: d.sdp, video: !!d.video };
+      pendingGroup = null;
+      $('caller-name').textContent = name;
+      $('caller-type').textContent = (d.video ? '📹 Video' : '📞 Voice') + ' call kar raha hai…';
+      callModal.classList.add('show');
+    } else if (d.kind === 'answer') {
+      if (group && group.pcs.has(from)) {
+        try { await group.pcs.get(from).pc.setRemoteDescription({ type: 'answer', sdp: d.sdp }); } catch {}
+        updateGroupStatus();
+      } else if (pc && from === callPeer) {
+        try { await pc.setRemoteDescription({ type: 'answer', sdp: d.sdp }); } catch {}
+        showCallUI('Connected ✅ — ' + (peers.get(from)?.name || name));
+      }
+    } else if (d.kind === 'ice') {
+      const g = group && group.pcs.get(from);
+      if (g) { try { await g.pc.addIceCandidate(d.candidate); } catch {} }
+      else if (pc && from === callPeer) { try { await pc.addIceCandidate(d.candidate); } catch {} }
+    } else if (d.kind === 'decline' || d.kind === 'hangup') {
+      if (group && group.pcs.has(from)) {
+        removeGroupPeer(from);
+        if (d.kind === 'decline') sys(`${name} ne group call kaat di`);
+      } else if (pc && from === callPeer) {
+        endCall(d.kind === 'decline' ? 'Call kaat di gayi' : 'Call khatam');
+      }
+    }
+  }
+
+  $('accept-btn').onclick = async () => {
+    callModal.classList.remove('show');
+    if (pendingGroup) {
+      const o = pendingGroup; pendingGroup = null;
+      if (!group) {
+        let stream;
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: o.video ? { facingMode: 'user' } : false });
+        } catch { send({ type: 'signal', to: o.from, data: { kind: 'decline', group: true } }); return; }
+        group = { video: o.video, stream, pcs: new Map() };
+        showVideos(); localVideo.srcObject = stream;
+      }
+      const pcx = new RTCPeerConnection(await getIce());
+      wireGroupPC(pcx, o.from);
+      group.stream.getTracks().forEach((t) => pcx.addTrack(t, group.stream));
+      try {
+        await pcx.setRemoteDescription({ type: 'offer', sdp: o.sdp });
+        const ans = await pcx.createAnswer();
+        await pcx.setLocalDescription(ans);
+        group.pcs.set(o.from, { pc: pcx });
+        send({ type: 'signal', to: o.from, data: { kind: 'answer', sdp: ans.sdp, group: true } });
+        updateGroupStatus();
+      } catch { removeGroupPeer(o.from, true); }
+      return;
+    }
+    const o = pendingOffer; pendingOffer = null;
+    if (!o) return;
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: o.video ? { facingMode: 'user' } : false });
+    } catch { send({ type: 'signal', to: o.from, data: { kind: 'decline' } }); return; }
+    localStream = stream; callPeer = o.from; callVideo = o.video;
+    pc = new RTCPeerConnection(await getIce());
+    pc.onicecandidate = (e) => {
+      if (e.candidate && callPeer) send({ type: 'signal', to: callPeer, data: { kind: 'ice', candidate: e.candidate } });
+    };
+    pc.ontrack = (e) => { ensureRemoteVideo(callPeer, peers.get(callPeer)?.name).srcObject = e.streams[0]; };
+    pc.onconnectionstatechange = () => {
+      if (pc && (pc.connectionState === 'failed' || pc.connectionState === 'disconnected')) endCall('Connection toot gaya');
+    };
+    stream.getTracks().forEach((t) => pc.addTrack(t, stream));
+    try {
+      await pc.setRemoteDescription({ type: 'offer', sdp: o.sdp });
+      const ans = await pc.createAnswer();
+      await pc.setLocalDescription(ans);
+      send({ type: 'signal', to: o.from, data: { kind: 'answer', sdp: ans.sdp } });
+      showVideos(); localVideo.srcObject = stream;
+      showCallUI('Connected ✅ — ' + o.name);
+    } catch { endCall(); }
+  };
+  $('decline-btn').onclick = () => {
+    callModal.classList.remove('show');
+    if (pendingGroup) { send({ type: 'signal', to: pendingGroup.from, data: { kind: 'decline', group: true } }); pendingGroup = null; }
+    if (pendingOffer) { send({ type: 'signal', to: pendingOffer.from, data: { kind: 'decline' } }); pendingOffer = null; }
+  };
+  $('hangup-btn').onclick = () => {
+    if (group) endGroupCall('Group call khatam 📞');
+    else endCall('Call khatam 📞');
+  };
+
+  /* ================= media: photo + voice ================= */
+  async function uploadEncrypted(ab) {
+    const fd = new FormData();
+    fd.append('file', new Blob([ab], { type: 'application/octet-stream' }), 'f.bin');
+    const r = await fetch('/upload?room=' + roomCode, { method: 'POST', body: fd });
+    const j = await r.json();
+    if (!j.file) throw new Error('upload fail');
+    return j.file;
+  }
+  async function sendMediaMessage(kind, file, blob) {
+    if (!roomKey) return;
+    sys(kind === 'photo' ? '📷 Photo bheji ja rahi hai…' : '🎤 Voice note bheja ja raha hai…');
+    try {
+      const enc = await encRaw(await blob.arrayBuffer());
+      const fname = await uploadEncrypted(enc);
+      const blobUrl = URL.createObjectURL(blob);
+      const cid = 'c' + (cidSeq++);
+      pending.set(cid, { kind, file: fname, mime: file.type || blob.type, blobUrl });
+      const payload = await encText(JSON.stringify({ file: fname, mime: file.type || blob.type }));
+      send({ type: 'chat', kind, payload, replyTo: replyToId, cid });
+      clearReply();
+      // remove the "bheji ja rahi" sys note on echo — simplest: leave it; harmless
+    } catch {
+      alert('Bhejne mein masla hua, dobara try karo');
+    }
+  }
+  $('photo-btn').onclick = () => $('photo-input').click();
+  $('photo-input').onchange = async (e) => {
+    const f = e.target.files[0];
+    e.target.value = '';
+    if (!f) return;
+    if (f.size > 15 * 1024 * 1024) { alert('File 15MB se bari hai'); return; }
+    await sendMediaMessage('photo', f, f);
+  };
+
+  let rec = null, recChunks = [];
+  const voiceBtn = $('voice-btn');
+  voiceBtn.onclick = async () => {
+    if (rec) { try { rec.stop(); } catch {} return; }
+    let s;
+    try { s = await navigator.mediaDevices.getUserMedia({ audio: true }); }
+    catch { alert('Mic ki permission do 🎤'); return; }
+    const mime = (window.MediaRecorder && MediaRecorder.isTypeSupported('audio/webm')) ? 'audio/webm' : '';
+    recChunks = [];
+    rec = new MediaRecorder(s, mime ? { mimeType: mime } : undefined);
+    rec.ondataavailable = (e) => { if (e.data && e.data.size) recChunks.push(e.data); };
+    rec.onstop = async () => {
+      s.getTracks().forEach((t) => t.stop());
+      const blob = new Blob(recChunks, { type: rec.mimeType || 'audio/webm' });
+      rec = null;
+      voiceBtn.classList.remove('rec'); voiceBtn.textContent = '🎤';
+      if (blob.size) await sendMediaMessage('audio', blob, blob);
+    };
+    rec.start();
+    voiceBtn.classList.add('rec'); voiceBtn.textContent = '⏹';
+    sys('🔴 Voice record ho raha hai… dobara dabao to bhejo');
+  };
+
+  /* ================= reply / edit ================= */
+  function setReply(id) {
+    replyToId = id;
+    const m = msgs.get(id);
+    $('reply-text').textContent = '↩ ' + (m ? ((m.from === myUserId ? 'Tum' : m.name) + ': ' + replySnippet(m)) : '…');
+    $('reply-bar').classList.add('show');
+    chatInput.focus();
+  }
+  function replySnippet(m) {
+    if (m.deleted) return 'deleted message';
+    if (m.kind !== 'text') return m.kind === 'photo' ? '📷 photo' : '🎤 voice note';
+    const t = decCache.get(m.id);
+    return typeof t === 'string' ? t.slice(0, 50) : '…';
+  }
+  function clearReply() { replyToId = null; $('reply-bar').classList.remove('show'); }
+  $('reply-cancel').onclick = clearReply;
+
+  async function startEdit(id) {
+    const m = msgs.get(id);
+    if (!m || m.from !== myUserId || m.kind !== 'text' || m.deleted) return;
+    editingId = id;
+    chatInput.value = await getText(m);
+    $('edit-bar').classList.add('show');
+    chatInput.focus();
+  }
+  function cancelEdit() { editingId = null; chatInput.value = ''; $('edit-bar').classList.remove('show'); }
+  $('edit-cancel').onclick = cancelEdit;
+
+  /* ================= chat send ================= */
+  async function sendChat() {
+    if (!roomKey) return;
+    if (editingId) {
+      const t = chatInput.value.trim();
+      if (!t) return;
+      send({ type: 'edit', id: editingId, payload: await encText(t) });
+      cancelEdit();
+      return;
+    }
+    const t = chatInput.value.trim();
+    if (!t) return;
+    const cid = 'c' + (cidSeq++);
+    pending.set(cid, { kind: 'text', text: t });
+    send({ type: 'chat', kind: 'text', payload: await encText(t), replyTo: replyToId, cid });
+    chatInput.value = '';
+    clearReply();
+    sendTyping(false);
+  }
+
+  /* ================= push ================= */
+  function b64ToU8(s) {
+    s = s.replace(/-/g, '+').replace(/_/g, '/');
+    while (s.length % 4) s += '=';
+    const bin = atob(s);
+    const b = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) b[i] = bin.charCodeAt(i);
+    return b;
+  }
+  async function registerSW() {
+    try {
+      if ('serviceWorker' in navigator) await navigator.serviceWorker.register('/sw.js');
+    } catch (e) { console.warn('sw fail', e); }
+  }
+  async function setupPush() {
+    try {
+      if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return;
+      if (Notification.permission === 'default') {
+        try { await Notification.requestPermission(); } catch {}
+      }
+      if (Notification.permission !== 'granted') return;
+      const reg = await navigator.serviceWorker.ready;
+      const cfg = await (await fetch('/config')).json();
+      if (!cfg.vapidPublicKey) return;
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) {
+        sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToU8(cfg.vapidPublicKey) });
+      }
+      await fetch('/push/subscribe', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: myUserId, room: roomCode, sub: sub.toJSON() }),
+      });
+    } catch (e) { console.warn('push setup fail', e); }
+  }
+
+  /* ================= UI wiring ================= */
+  function wireUI() {
+    $('create-btn').onclick = () => {
+      myName = $('name-input').value.trim() || 'Guest';
+      localStorage.setItem('dosti_name', myName);
+      $('join-error').textContent = '';
+      send({ type: 'create-room', userId: myUserId, name: myName, avatar: myAvatar });
+    };
+    $('join-btn').onclick = () => {
+      myName = $('name-input').value.trim() || 'Guest';
+      localStorage.setItem('dosti_name', myName);
+      $('join-error').textContent = '';
+      const code = $('code-input').value.trim().toUpperCase();
+      if (!code) { $('join-error').textContent = 'Pehle invite code likho.'; return; }
+      send({ type: 'join', roomCode: code, userId: myUserId, name: myName, avatar: myAvatar });
+    };
+    $('code-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('join-btn').click(); });
+    $('name-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('create-btn').click(); });
+
+    $('send-btn').onclick = sendChat;
+    chatInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendChat(); });
+    chatInput.addEventListener('input', () => {
+      if (!chatInput.value.trim()) { sendTyping(false); return; }
+      sendTyping(true);
+      clearTimeout(typingTimer);
+      typingTimer = setTimeout(() => sendTyping(false), 2500);
+    });
+    chatInput.addEventListener('blur', () => sendTyping(false));
+
+    $('group-call-btn').onclick = () => {
+      const useVideo = confirm('Video ke saath group call? (Cancel = sirf voice)');
+      startGroupCall(useVideo);
+    };
+    $('lock-now-btn').onclick = () => {
+      if (!localStorage.getItem(PIN_KEY)) { alert('Pehle App Lock mein PIN set karo 🔒'); return; }
+      pinFails = 0;
+      showLock();
+    };
+    $('leave-btn').onclick = async () => {
+      try {
+        await fetch('/push/unsubscribe', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: myUserId, room: roomCode }),
+        });
+      } catch {}
+      if (group) endGroupCall(); else endCall();
+      sendTyping(false);
+      send({ type: 'leave' });
+    };
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') sendRead();
+    });
+    window.addEventListener('beforeunload', () => sendTyping(false));
+  }
+
+  /* ================= boot (PIN gate first) ================= */
+  if (localStorage.getItem(PIN_KEY)) {
+    showLock();   // appStarted=false → unlock calls startApp()
+  } else {
+    appStarted = true;
+    startApp();
+  }
+})();
+</script>
+</body>
+</html>

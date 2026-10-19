@@ -1,0 +1,1 @@
+{"dependencies":{"express":"^4.19.2","multer":"^2.4.0","web-push":"^3.6.7","ws":"^8.18.0"},"description":"Private chat web app with text chat and voice/video calls (WebRTC + WebSocket signaling)","license":"UNLICENSED","main":"server.js","engines":{"node":">=22"},"name":"dosti-chat","scripts":{"start":"node server.js"},"version":"0.1.0"}
