@@ -120,6 +120,104 @@
   #accept-btn { background: #16a34a; color: #fff; }
   #decline-btn { background: #dc2626; color: #fff; }
   .hidden-input { display: none; }
+
+  /* ---------- v2: themes (variables override the default palette) ---------- */
+  body[data-theme="dark"]  { --bg:#05070d; --panel:#10141d; --panel2:#1a2130; --border:#232c42; --accent:#7dd3fc; --mine:#155e75; --theirs:#1a2130; --input:#05070d; --muted:#8b98b4; }
+  body[data-theme="green"] { --bg:#0b141a; --panel:#1f2c34; --panel2:#2a3942; --border:#374850; --accent:#25d366; --mine:#005c4b; --theirs:#202c33; --input:#0b141a; --muted:#8696a0; }
+  body[data-theme="pink"]  { --bg:#1c0f18; --panel:#2d1626; --panel2:#3f2136; --border:#5b3550; --accent:#f472b6; --mine:#9d2464; --theirs:#3f2136; --input:#1c0f18; --muted:#c9a0bb; }
+  body[data-theme="blue"]  { --bg:#081226; --panel:#10203c; --panel2:#1a3054; --border:#27406b; --accent:#38bdf8; --mine:#0369a1; --theirs:#1a3054; --input:#081226; --muted:#93a9cc; }
+  body[data-theme] { background: var(--bg); }
+  body[data-theme] .card { background: var(--panel); }
+  body[data-theme] .card input, body[data-theme] #chat-input { background: var(--input); border-color: var(--border); }
+  body[data-theme] .btn-ghost, body[data-theme] .icon-btn, body[data-theme] .mini-btn { background: var(--panel2); }
+  body[data-theme] .btn-primary, body[data-theme] #send-btn { background: var(--accent); }
+  body[data-theme] #room-header, body[data-theme] #chat-bar { background: var(--panel); border-color: var(--border); }
+  body[data-theme] #peers { background: var(--panel); border-color: var(--border); }
+  body[data-theme] .peer { background: var(--panel2); }
+  body[data-theme] .peer button { background: var(--accent); }
+  body[data-theme] .msg.mine { background: var(--mine); }
+  body[data-theme] .msg.theirs { background: var(--theirs); }
+  body[data-theme] #reply-bar, body[data-theme] #edit-bar { background: var(--panel2); border-color: var(--border); }
+  body[data-theme] #room-header .code { border-color: var(--accent); color: var(--accent); }
+  body[data-theme] .card p, body[data-theme] .avatar-label { color: var(--muted); }
+
+  /* ---------- v2: chat wallpapers (CSS only) ---------- */
+  body[data-wall="dots"] #messages { background-image: radial-gradient(rgba(255,255,255,.07) 1.5px, transparent 1.6px); background-size: 22px 22px; }
+  body[data-wall="grid"] #messages { background-image: linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px); background-size: 26px 26px; }
+  body[data-wall="waves"] #messages { background-image: repeating-radial-gradient(circle at 0 50%, transparent 0, transparent 14px, rgba(255,255,255,.045) 15px, transparent 16px); background-size: 34px 34px; }
+  body[data-wall="purple"] #messages { background-color: #221a3d; }
+  body[data-wall="forest"] #messages { background-color: #0e241a; }
+  body[data-wall="sunset"] #messages { background: linear-gradient(180deg, #2b1535, #3d1a2e); }
+
+  /* ---------- v2: auth screen / rooms list ---------- */
+  #auth-error { color: #ff7b7b; font-size: 14px; min-height: 20px; margin-bottom: 8px; text-align: center; }
+  .account-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 18px; padding-top: 16px; border-top: 1px solid #2b3650; font-size: 14px; }
+  .account-row .who-acc { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .account-row button { flex-shrink: 0; }
+  #rooms-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 6px; }
+  .room-item { display: flex; align-items: center; gap: 8px; background: #0f1420; border: 1px solid #2b3650; border-radius: 10px; padding: 10px 12px; }
+  .room-item .rc { font-weight: 700; letter-spacing: 2px; color: #9db4ff; }
+  .room-item .rn { color: #9aa6bd; font-size: 12px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .room-item button { border: none; border-radius: 8px; padding: 7px 11px; font-size: 13px; cursor: pointer; background: #4f7cff; color: #fff; }
+  .room-item button.rm { background: #232d45; color: #dbe2f0; }
+  #rooms-empty { color: #5c6a88; font-size: 13px; text-align: center; padding: 4px 0 8px; }
+
+  /* ---------- v2: pin bar / search bar ---------- */
+  #pin-bar { display: none; align-items: center; gap: 8px; background: #1c2740; border-bottom: 1px solid #2b3650; padding: 7px 14px; font-size: 13px; cursor: pointer; }
+  #pin-bar.show { display: flex; }
+  #pin-text { flex: 1; color: #fbbf24; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #search-bar { display: none; align-items: center; gap: 6px; background: #131a29; border-bottom: 1px solid #232d45; padding: 7px 10px; }
+  #search-bar.show { display: flex; }
+  #search-input { flex: 1; padding: 9px 12px; border-radius: 18px; border: 1px solid #2b3650; background: #0f1420; color: #fff; font-size: 15px; outline: none; }
+  #search-count { color: #9aa6bd; font-size: 12px; min-width: 38px; text-align: center; }
+  .msg.search-hit { outline: 2px solid rgba(251,191,36,.55); }
+  .msg.search-cur { outline: 3px solid #fbbf24; }
+  .msg.flash { animation: flashBg 1.2s ease; }
+  @keyframes flashBg { 0%,100% { filter: brightness(1); } 30% { filter: brightness(1.7); } }
+
+  /* ---------- v2: reactions ---------- */
+  .msg .reactions { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+  .msg .reactions:empty { display: none; }
+  .rx-badge { background: rgba(0,0,0,.3); border: 1px solid rgba(255,255,255,.14); border-radius: 999px; padding: 1px 7px; font-size: 12px; cursor: pointer; }
+  .rx-badge.mine-rx { border-color: #fbbf24; background: rgba(251,191,36,.18); }
+  #react-picker { display: none; position: fixed; z-index: 80; background: #232d45; border: 1px solid #2b3650; border-radius: 999px; padding: 6px 8px; box-shadow: 0 8px 24px rgba(0,0,0,.5); gap: 2px; }
+  #react-picker.show { display: flex; }
+  #react-picker button { background: none; border: none; font-size: 22px; cursor: pointer; padding: 3px 5px; border-radius: 50%; }
+  #react-picker button:active { background: rgba(255,255,255,.15); }
+
+  /* ---------- v2: media cards (file / location / video note) ---------- */
+  .file-card { display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,.22); border-radius: 10px; padding: 10px 12px; margin-top: 4px; min-width: 190px; }
+  .file-card .fic { font-size: 28px; }
+  .file-card .fmeta { flex: 1; min-width: 0; }
+  .file-card .fname { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .file-card .fsize { font-size: 12px; opacity: .7; }
+  .file-card a.dl { background: rgba(255,255,255,.16); color: inherit; text-decoration: none; border-radius: 50%; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
+  .loc-card { margin-top: 4px; border-radius: 10px; overflow: hidden; background: rgba(0,0,0,.22); min-width: 210px; }
+  .loc-card iframe { width: 100%; height: 140px; border: 0; display: block; }
+  .loc-card .lmeta { display: flex; align-items: center; gap: 6px; padding: 8px 10px; font-size: 13px; }
+  .loc-card .lmeta a { color: #7dd3fc; text-decoration: none; font-weight: 600; }
+  .loc-card .live-dot { color: #f87171; animation: pulseDot 1.2s infinite; }
+  @keyframes pulseDot { 0%,100% { opacity: 1; } 50% { opacity: .25; } }
+  .loc-card .lstop { margin-left: auto; background: #dc2626; color: #fff; border: none; border-radius: 6px; padding: 4px 9px; font-size: 12px; cursor: pointer; }
+  video.vnote { width: 218px; height: 218px; border-radius: 50%; object-fit: cover; display: block; margin-top: 4px; background: #000; }
+
+  /* ---------- v2: attach menu / settings / video-note overlay ---------- */
+  #attach-menu { display: none; position: absolute; left: 12px; bottom: 74px; background: #232d45; border: 1px solid #2b3650; border-radius: 14px; padding: 8px; z-index: 40; box-shadow: 0 10px 30px rgba(0,0,0,.5); flex-direction: column; gap: 2px; min-width: 210px; }
+  #attach-menu.show { display: flex; }
+  #attach-menu button { background: none; border: none; color: #eef1f6; text-align: left; font-size: 15px; padding: 10px 12px; border-radius: 9px; cursor: pointer; }
+  #attach-menu button:active { background: rgba(255,255,255,.1); }
+  .modal-panel { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.7); align-items: center; justify-content: center; z-index: 60; padding: 22px; }
+  .modal-panel.show { display: flex; }
+  .modal-panel .card { max-height: 88dvh; overflow-y: auto; }
+  .modal-panel h3 { margin-bottom: 14px; }
+  .set-label { display: block; color: #9aa6bd; font-size: 13px; margin: 14px 0 7px; }
+  .opt-row { display: flex; flex-wrap: wrap; gap: 7px; }
+  .opt-row button { border: 2px solid #2b3650; background: #0f1420; color: #dbe2f0; border-radius: 9px; padding: 8px 11px; font-size: 13px; cursor: pointer; }
+  .opt-row button.sel { border-color: #4f7cff; background: #1c2740; }
+  .modal-panel select { width: 100%; padding: 11px; border-radius: 10px; border: 1px solid #2b3650; background: #0f1420; color: #fff; font-size: 15px; }
+  #vnote-video { width: 240px; height: 240px; border-radius: 50%; object-fit: cover; background: #000; display: block; margin: 0 auto 14px; }
+  #vnote-timer { text-align: center; font-size: 15px; margin-bottom: 12px; color: #fbbf24; min-height: 20px; }
+  #room-screen { position: relative; }
 </style>
 </head>
 <body>
@@ -143,8 +241,24 @@
   </div>
 </div>
 
+<!-- AUTH (email login) -->
+<div id="auth-screen" class="screen">
+  <div class="card">
+    <h1>💬 Dosti Chat</h1>
+    <p>Apni private chat — pehle apne account se login karo. Tumhare rooms har device par wapas aa jayenge. 🔒</p>
+    <div id="auth-name-wrap" style="display:none">
+      <input id="auth-name" placeholder="Tumhara naam" maxlength="30" autocomplete="name">
+    </div>
+    <input id="auth-email" type="email" placeholder="Email" autocomplete="email">
+    <input id="auth-pass" type="password" placeholder="Password (kam se kam 6 characters)" autocomplete="current-password">
+    <div id="auth-error"></div>
+    <button class="btn btn-primary" id="auth-submit">Login</button>
+    <button class="btn btn-ghost" id="auth-toggle">Account nahi hai? Register karo</button>
+  </div>
+</div>
+
 <!-- JOIN -->
-<div id="join-screen" class="screen active">
+<div id="join-screen" class="screen">
   <div class="card">
     <h1>💬 Dosti Chat</h1>
     <p>Apni private chat — sirf invite walon ke liye. 🔒 End-to-end encrypted.</p>
@@ -156,6 +270,15 @@
     <div class="divider">ya</div>
     <input id="code-input" placeholder="Invite code (jaise: KX7P2Q)" maxlength="6" autocomplete="off" style="text-transform:uppercase">
     <button class="btn btn-ghost" id="join-btn">Room join karo</button>
+
+    <div class="divider">mere rooms</div>
+    <div id="rooms-list"></div>
+    <div id="rooms-empty">Abhi koi room nahi — naya banao ya code se join karo.</div>
+
+    <div class="account-row">
+      <span class="who-acc">👤 <span id="account-email">—</span></span>
+      <button class="icon-btn" id="logout-btn">Logout</button>
+    </div>
 
     <div class="lock-settings">
       <div class="lock-row"><span>🔒 App Lock</span><span class="st" id="lock-state">Off</span></div>
@@ -184,9 +307,19 @@
     <span class="code" id="room-code"></span>
     <button class="icon-btn" id="copy-btn">🔗 Invite</button>
     <button class="icon-btn" id="group-call-btn">👥 Group call</button>
+    <button class="icon-btn" id="search-btn" title="Messages dhoondo">🔍</button>
+    <button class="icon-btn" id="settings-btn" title="Room settings">🎨</button>
     <span class="spacer"></span>
     <button class="icon-btn" id="lock-now-btn" title="Foran lock lagao">🔒</button>
     <button class="icon-btn" id="leave-btn">Leave</button>
+  </div>
+  <div id="pin-bar"><span>📌</span><span id="pin-text"></span><button class="icon-btn" id="pin-unpin" title="Unpin">✖</button></div>
+  <div id="search-bar">
+    <input id="search-input" placeholder="Message dhoondo…" autocomplete="off">
+    <span id="search-count"></span>
+    <button class="icon-btn" id="search-up" title="Pichla">↑</button>
+    <button class="icon-btn" id="search-down" title="Agla">↓</button>
+    <button class="icon-btn" id="search-close" title="Band">✖</button>
   </div>
   <div id="peers"><span id="peers-empty">Room mein akelay ho — invite link bhejo! 📩</span></div>
   <div id="videos">
@@ -202,12 +335,66 @@
   <div id="reply-bar"><span id="reply-text"></span><button class="icon-btn" id="reply-cancel">✖</button></div>
   <div id="edit-bar"><span>✏️ Edit ho raha hai</span><span class="spacer" style="flex:1"></span><button class="icon-btn" id="edit-cancel">✖</button></div>
   <div id="chat-bar">
-    <button class="mini-btn" id="photo-btn" title="Photo bhejo">📷</button>
+    <button class="mini-btn" id="attach-btn" title="Attach">📎</button>
     <button class="mini-btn" id="voice-btn" title="Voice note">🎤</button>
     <input id="chat-input" placeholder="Message likho…" autocomplete="off">
     <button id="send-btn">➤</button>
   </div>
+  <div id="attach-menu">
+    <button id="am-photo">📷 Photo bhejo</button>
+    <button id="am-file">📁 File bhejo (koi bhi)</button>
+    <button id="am-vnote">🎬 Video note</button>
+    <button id="am-location">📍 Location bhejo</button>
+    <button id="am-live">📡 Live location (1 ghanta)</button>
+  </div>
 </div>
+
+<!-- ROOM SETTINGS -->
+<div id="settings-panel" class="modal-panel">
+  <div class="card">
+    <h3>⚙️ Room Settings</h3>
+    <span class="set-label">🎨 Theme</span>
+    <div class="opt-row" id="theme-row">
+      <button data-theme-val="">Default</button>
+      <button data-theme-val="dark">🌑 Dark</button>
+      <button data-theme-val="green">🟢 Green</button>
+      <button data-theme-val="pink">🌸 Pink</button>
+      <button data-theme-val="blue">🔵 Blue</button>
+    </div>
+    <span class="set-label">🖼 Chat wallpaper</span>
+    <div class="opt-row" id="wall-row">
+      <button data-wall-val="">Koi nahi</button>
+      <button data-wall-val="dots">Dots</button>
+      <button data-wall-val="grid">Grid</button>
+      <button data-wall-val="waves">Waves</button>
+      <button data-wall-val="purple">Purple</button>
+      <button data-wall-val="forest">Forest</button>
+      <button data-wall-val="sunset">Sunset</button>
+    </div>
+    <span class="set-label">⏰ Disappearing messages (is room ke naye messages)</span>
+    <select id="disappear-sel">
+      <option value="0">Off</option>
+      <option value="3600000">1 ghanta</option>
+      <option value="86400000">24 ghante</option>
+      <option value="604800000">7 din</option>
+    </select>
+    <div style="height:16px"></div>
+    <button class="btn btn-ghost" id="settings-close">Band karo</button>
+  </div>
+</div>
+
+<!-- VIDEO NOTE -->
+<div id="vnote-panel" class="modal-panel">
+  <div class="card">
+    <h3 style="text-align:center">🎬 Video Note</h3>
+    <video id="vnote-video" autoplay muted playsinline></video>
+    <div id="vnote-timer"></div>
+    <button class="btn btn-primary" id="vnote-rec">⏺ Record karo</button>
+    <button class="btn btn-ghost" id="vnote-cancel">Cancel</button>
+  </div>
+</div>
+
+<div id="react-picker"></div>
 
 <!-- INCOMING CALL -->
 <div id="call-modal">
@@ -222,6 +409,7 @@
 </div>
 
 <input type="file" id="photo-input" class="hidden-input" accept="image/*">
+<input type="file" id="file-input" class="hidden-input">
 
 <script>
 (function () {
@@ -379,7 +567,181 @@
   const callBar = $('call-bar'), callStatus = $('call-status');
   const callModal = $('call-modal');
 
+  /* ================= v2: auth session / vault / my rooms ================= */
+  let authToken = localStorage.getItem('dosti_token') || null;
+  let account = null;
+  let vaultKey = null;                    // derived from password — never the password itself
+  let authMode = 'login';
+  let myRooms = loadLocalRooms();         // [{code, name}]
+  // feature state
+  let reactionsMap = new Map();           // msgId -> Map(emoji -> Set(userId))
+  let pinnedMsgId = null;
+  let roomDisappearMs = 0;
+  let liveLoc = null;                     // {id, timer}
+  const REACTION_EMOJIS = ['❤️', '😂', '😮', '😢', '😡', '👍'];
+
+  function authHeaders(extra) {
+    return Object.assign({ Authorization: 'Bearer ' + (authToken || '') }, extra || {});
+  }
+
+  /* ---------- themes (persisted locally) ---------- */
+  function applyTheme() {
+    const t = localStorage.getItem('dosti_theme') || '';
+    const w = localStorage.getItem('dosti_wall') || '';
+    if (t) document.body.dataset.theme = t; else delete document.body.dataset.theme;
+    if (w) document.body.dataset.wall = w; else delete document.body.dataset.wall;
+    document.querySelectorAll('#theme-row button').forEach((b) => b.classList.toggle('sel', (b.dataset.themeVal || '') === t));
+    document.querySelectorAll('#wall-row button').forEach((b) => b.classList.toggle('sel', (b.dataset.wallVal || '') === w));
+  }
+
+  /* ---------- my rooms (local + encrypted vault) ---------- */
+  function loadLocalRooms() {
+    try { const r = JSON.parse(localStorage.getItem('dosti_rooms') || '[]'); return Array.isArray(r) ? r : []; }
+    catch { return []; }
+  }
+  function saveLocalRooms() { localStorage.setItem('dosti_rooms', JSON.stringify(myRooms)); }
+  function addRoom(code, name) {
+    if (!code || myRooms.some((r) => r.code === code)) return;
+    myRooms.unshift({ code, name: name || '' });
+    saveLocalRooms(); renderRoomsList(); vaultSave();
+  }
+  function removeRoom(code) {
+    myRooms = myRooms.filter((r) => r.code !== code);
+    saveLocalRooms(); renderRoomsList(); vaultSave();
+  }
+  function renderRoomsList() {
+    const box = $('rooms-list');
+    if (!box) return;
+    box.innerHTML = '';
+    $('rooms-empty').style.display = myRooms.length ? 'none' : '';
+    for (const r of myRooms) {
+      const d = document.createElement('div'); d.className = 'room-item';
+      const c = document.createElement('span'); c.className = 'rc'; c.textContent = r.code;
+      const n = document.createElement('span'); n.className = 'rn'; n.textContent = r.name || '';
+      const j = document.createElement('button'); j.textContent = 'Join';
+      j.onclick = () => { $('code-input').value = r.code; $('join-btn').click(); };
+      const rm = document.createElement('button'); rm.className = 'rm'; rm.textContent = '✖';
+      rm.title = 'List se hatao';
+      rm.onclick = () => removeRoom(r.code);
+      d.appendChild(c); d.appendChild(n); d.appendChild(j); d.appendChild(rm);
+      box.appendChild(d);
+    }
+  }
+
+  /* ---------- vault: rooms encrypted with a password-derived key ---------- */
+  async function deriveVaultKey(password) {
+    const km = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveKey']);
+    return crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt: new TextEncoder().encode('dosti-vault-v1'), iterations: 100000, hash: 'SHA-256' },
+      km, { name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
+  }
+  async function vaultEncrypt(obj) {
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, vaultKey, new TextEncoder().encode(JSON.stringify(obj)));
+    const out = new Uint8Array(12 + ct.byteLength);
+    out.set(iv); out.set(new Uint8Array(ct), 12);
+    return b64e(out.buffer);
+  }
+  async function vaultDecrypt(b64) {
+    const b = new Uint8Array(b64d(b64));
+    const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b.slice(0, 12) }, vaultKey, b.slice(12));
+    return JSON.parse(new TextDecoder().decode(pt));
+  }
+  async function vaultSave() {
+    if (!vaultKey || !authToken) return;
+    try {
+      const blob = await vaultEncrypt({ rooms: myRooms });
+      await fetch('/api/vault', {
+        method: 'PUT', headers: authHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ blob }),
+      });
+    } catch {}
+  }
+  // After a password login/register: pull the vault, merge with local rooms
+  // (this is also the one-time import of pre-account local rooms), push union back.
+  async function vaultLoadMerge() {
+    if (!vaultKey || !authToken) return;
+    try {
+      const r = await fetch('/api/vault', { headers: authHeaders() });
+      const j = await r.json();
+      if (j && j.blob) {
+        const data = await vaultDecrypt(j.blob);
+        const remote = (data && Array.isArray(data.rooms)) ? data.rooms : [];
+        for (const rm of remote) {
+          if (rm && rm.code && !myRooms.some((x) => x.code === rm.code)) {
+            myRooms.push({ code: rm.code, name: rm.name || '' });
+          }
+        }
+        saveLocalRooms(); renderRoomsList();
+      }
+    } catch {}
+    vaultSave();
+  }
+  async function restoreVaultKey() {
+    try {
+      const b = sessionStorage.getItem('dosti_vault_key');
+      if (b) vaultKey = await crypto.subtle.importKey('raw', b64d(b), { name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
+    } catch {}
+  }
+
+  /* ---------- auth screen ---------- */
+  function showAuth() {
+    $('auth-screen').classList.add('active');
+    $('join-screen').classList.remove('active');
+    $('room-screen').classList.remove('active');
+  }
+  function setAuthMode(mode) {
+    authMode = mode;
+    $('auth-name-wrap').style.display = mode === 'register' ? '' : 'none';
+    $('auth-submit').textContent = mode === 'register' ? 'Account banao' : 'Login';
+    $('auth-toggle').textContent = mode === 'register' ? 'Pehle se account hai? Login karo' : 'Account nahi hai? Register karo';
+    $('auth-error').textContent = '';
+  }
+  async function afterAuth() {
+    $('account-email').textContent = account ? account.email : '';
+    $('auth-screen').classList.remove('active');
+    $('join-screen').classList.add('active');
+    await restoreVaultKey();
+    renderRoomsList();
+    if (localStorage.getItem(PIN_KEY)) {
+      appStarted = false;
+      showLock();   // unlock → startApp()
+    } else {
+      appStarted = true;
+      startApp();
+    }
+  }
+  $('auth-toggle').onclick = () => setAuthMode(authMode === 'login' ? 'register' : 'login');
+  $('auth-submit').onclick = async () => {
+    const email = $('auth-email').value.trim();
+    const password = $('auth-pass').value;
+    const name = $('auth-name').value.trim();
+    $('auth-error').textContent = '';
+    try {
+      const body = authMode === 'register' ? { name, email, password } : { email, password };
+      const r = await fetch('/api/auth/' + authMode, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) { $('auth-error').textContent = j.error || 'Kuch galat ho gaya'; return; }
+      authToken = j.token; account = j.account;
+      localStorage.setItem('dosti_token', authToken);
+      vaultKey = await deriveVaultKey(password);
+      try {
+        const raw = await crypto.subtle.exportKey('raw', vaultKey);
+        sessionStorage.setItem('dosti_vault_key', b64e(raw));
+      } catch {}
+      $('auth-pass').value = '';
+      await vaultLoadMerge();
+      afterAuth();
+    } catch { $('auth-error').textContent = 'Server se rabta nahi ho raha'; }
+  };
+  $('auth-pass').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('auth-submit').click(); });
+  $('auth-email').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('auth-submit').click(); });
+
   function startApp() {
+    applyTheme();
+    renderRoomsList();
     renderLockSettings();
     wireUI();
     registerSW();
@@ -441,6 +803,7 @@
   function connect() {
     const proto = location.protocol === 'https:' ? 'wss://' : 'ws://';
     ws = new WebSocket(proto + location.host + '/ws');
+    ws.onopen = () => { try { ws.send(JSON.stringify({ type: 'auth', token: authToken })); } catch {} };
     ws.onmessage = (ev) => { onMsg(ev).catch((e) => console.warn(e)); };
     ws.onclose = () => setTimeout(() => { if ($('room-screen').classList.contains('active')) connect(); }, 2000);
   }
@@ -455,15 +818,152 @@
   function fmtTime(ts) {
     return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
+  function fmtSize(n) {
+    if (!n) return '';
+    if (n < 1024) return n + ' B';
+    if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+    return (n / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+  function kindLabel(kind) {
+    return { photo: '📷 photo', audio: '🎤 voice note', video: '🎬 video note', file: '📁 file', location: '📍 location' }[kind] || '💬 message';
+  }
+  function disappearLabel(ms) {
+    if (ms >= 604800000) return '7 din';
+    if (ms >= 86400000) return '24 ghante';
+    if (ms >= 3600000) return '1 ghante';
+    return Math.max(1, Math.round(ms / 1000)) + ' second';
+  }
 
   async function quoteSnippet(m) {
     const orig = msgs.get(m.replyTo);
     if (!orig) return '…';
     if (orig.deleted) return '🗑 deleted message';
-    if (orig.kind === 'photo') return '📷 photo';
-    if (orig.kind === 'audio') return '🎤 voice note';
+    if (orig.kind !== 'text') return kindLabel(orig.kind);
     const t = await getText(orig);
     return (orig.from === myUserId ? 'Tum' : orig.name) + ': ' + String(t).slice(0, 60);
+  }
+
+  /* ---------- v2: location card (payload = encrypted {lat,lng,live,ended}) ---------- */
+  async function locationNode(m) {
+    const wrap = document.createElement('div'); wrap.className = 'loc-card';
+    try {
+      let meta = decCache.get(m.id);
+      if (!meta || typeof meta === 'string') {
+        meta = JSON.parse(await decText(m.payload));
+        decCache.set(m.id, meta);
+      }
+      const lat = Number(meta.lat), lng = Number(meta.lng);
+      if (!isFinite(lat) || !isFinite(lng)) throw new Error('bad loc');
+      const fr = document.createElement('iframe');
+      fr.loading = 'lazy';
+      fr.src = `https://www.openstreetmap.org/export/embed.html?bbox=${lng - 0.008},${lat - 0.008},${lng + 0.008},${lat + 0.008}&layer=mapnik&marker=${lat},${lng}`;
+      wrap.appendChild(fr);
+      const lm = document.createElement('div'); lm.className = 'lmeta';
+      if (meta.live && !meta.ended) {
+        const d = document.createElement('span'); d.className = 'live-dot'; d.textContent = '●';
+        lm.appendChild(d);
+        lm.appendChild(document.createTextNode('Live location'));
+      } else {
+        lm.appendChild(document.createTextNode(meta.live ? '📍 Location (live khatam)' : '📍 Location'));
+      }
+      const a = document.createElement('a');
+      a.href = `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=16/${lat}/${lng}`;
+      a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'Map kholo';
+      lm.appendChild(a);
+      if (m.from === myUserId && meta.live && !meta.ended) {
+        const sb = document.createElement('button'); sb.className = 'lstop'; sb.textContent = '⏹ Band';
+        sb.onclick = (ev) => { ev.stopPropagation(); stopLiveLocation(); };
+        lm.appendChild(sb);
+      }
+      wrap.appendChild(lm);
+      return wrap;
+    } catch {
+      wrap.textContent = '📍 location khul nahi saki';
+      return wrap;
+    }
+  }
+
+  /* ---------- v2: reactions ---------- */
+  function buildReactions(obj) {
+    const map = new Map();
+    for (const [mid, list] of Object.entries(obj || {})) {
+      const em = new Map();
+      for (const r of (list || [])) {
+        if (!em.has(r.emoji)) em.set(r.emoji, new Set());
+        em.get(r.emoji).add(r.userId);
+      }
+      map.set(Number(mid), em);
+    }
+    return map;
+  }
+  function renderReactions(id) {
+    const el = document.getElementById('m' + id);
+    if (!el) return;
+    const box = el.querySelector('.reactions');
+    if (!box) return;
+    box.innerHTML = '';
+    const msg = msgs.get(id);
+    if (msg && msg.deleted) return;
+    const em = reactionsMap.get(id);
+    if (!em) return;
+    for (const [emoji, users] of em) {
+      if (!users.size) continue;
+      const b = document.createElement('button');
+      b.className = 'rx-badge' + (users.has(myUserId) ? ' mine-rx' : '');
+      b.textContent = emoji + ' ' + users.size;
+      b.title = 'React / hatane ke liye dabao';
+      b.onclick = (ev) => { ev.stopPropagation(); send({ type: 'reaction', id, emoji }); };
+      box.appendChild(b);
+    }
+  }
+  function applyReaction(id, emoji, userId, on) {
+    let em = reactionsMap.get(id);
+    if (!em) { em = new Map(); reactionsMap.set(id, em); }
+    let set = em.get(emoji);
+    if (!set) { set = new Set(); em.set(emoji, set); }
+    if (on) set.add(userId); else set.delete(userId);
+    renderReactions(id);
+  }
+  // emoji picker popup
+  let pickerFor = null;
+  const pickerEl = $('react-picker');
+  REACTION_EMOJIS.forEach((e) => {
+    const b = document.createElement('button');
+    b.textContent = e;
+    b.onclick = () => { if (pickerFor != null) send({ type: 'reaction', id: pickerFor, emoji: e }); hidePicker(); };
+    pickerEl.appendChild(b);
+  });
+  function openPicker(id, anchorEl) {
+    pickerFor = id;
+    pickerEl.classList.add('show');
+    const r = anchorEl.getBoundingClientRect();
+    const pw = pickerEl.offsetWidth || 250;
+    pickerEl.style.left = Math.max(8, Math.min(r.left, window.innerWidth - pw - 8)) + 'px';
+    pickerEl.style.top = Math.max(8, r.top - 54) + 'px';
+  }
+  function hidePicker() { pickerEl.classList.remove('show'); pickerFor = null; }
+  document.addEventListener('pointerdown', (e) => { if (!pickerEl.contains(e.target)) hidePicker(); });
+
+  /* ---------- v2: pinned message bar ---------- */
+  async function pinSnippet(id) {
+    const m = msgs.get(id);
+    if (!m) return '📌 Pinned message';
+    if (m.deleted) return '🗑 deleted message';
+    if (m.kind !== 'text') return kindLabel(m.kind);
+    return (m.from === myUserId ? 'Tum' : m.name) + ': ' + String(await getText(m)).slice(0, 60);
+  }
+  async function renderPinBar() {
+    const bar = $('pin-bar');
+    if (!pinnedMsgId || !msgs.has(pinnedMsgId)) { bar.classList.remove('show'); return; }
+    $('pin-text').textContent = await pinSnippet(pinnedMsgId);
+    bar.classList.add('show');
+  }
+  function setPinned(id) { pinnedMsgId = id; renderPinBar(); }
+  function scrollToMsg(id) {
+    const el = document.getElementById('m' + id);
+    if (!el) return;
+    el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
   }
 
   async function mediaNode(m) {
@@ -477,7 +977,7 @@
       if (!meta || !/^[0-9a-f]{32}$/.test(meta.file)) throw new Error('bad meta');
       let url = mediaCache.get(meta.file);
       if (!url) {
-        const r = await fetch(`/uploads/${roomCode}/${meta.file}`);
+        const r = await fetch(`/uploads/${roomCode}/${meta.file}`, { headers: authHeaders() });
         if (!r.ok) throw new Error('dl fail');
         const pt = await decRaw(await r.arrayBuffer());
         url = URL.createObjectURL(new Blob([pt], { type: meta.mime || 'application/octet-stream' }));
@@ -487,6 +987,23 @@
         const img = document.createElement('img');
         img.src = url; img.loading = 'lazy'; img.alt = 'photo';
         return img;
+      }
+      if (m.kind === 'video') {
+        const v = document.createElement('video');
+        v.src = url; v.controls = true; v.playsInline = true; v.className = 'vnote'; v.preload = 'metadata';
+        return v;
+      }
+      if (m.kind === 'file') {
+        const card = document.createElement('div'); card.className = 'file-card';
+        const ic = document.createElement('span'); ic.className = 'fic'; ic.textContent = '📄';
+        const fm = document.createElement('div'); fm.className = 'fmeta';
+        const fn = document.createElement('div'); fn.className = 'fname'; fn.textContent = meta.name || 'file';
+        const fs2 = document.createElement('div'); fs2.className = 'fsize'; fs2.textContent = fmtSize(meta.size || 0);
+        fm.appendChild(fn); fm.appendChild(fs2);
+        const dl = document.createElement('a');
+        dl.className = 'dl'; dl.href = url; dl.download = meta.name || 'file'; dl.textContent = '⬇'; dl.title = 'Download';
+        card.appendChild(ic); card.appendChild(fm); card.appendChild(dl);
+        return card;
       }
       const a = document.createElement('audio');
       a.controls = true; a.src = url;
@@ -519,6 +1036,7 @@
     el.innerHTML = '';
     const who = document.createElement('div'); who.className = 'who';
     who.append(document.createTextNode((m.avatar || '') + ' ' + (mine ? 'Tum' : m.name) + ' • ' + fmtTime(m.ts) + ' '));
+    if (m.expiresAt) who.append(document.createTextNode('⏳ '));
     if (mine) {
       const t = document.createElement('span');
       t.className = 'ticks'; t.dataset.ts = m.ts; t.textContent = '✓';
@@ -536,10 +1054,15 @@
       body.classList.add('deleted');
     } else if (m.kind === 'text') {
       body.textContent = await getText(m);
+    } else if (m.kind === 'location') {
+      body.appendChild(await locationNode(m));
     } else {
       body.appendChild(await mediaNode(m));
     }
     el.appendChild(body);
+    const rxBox = document.createElement('div'); rxBox.className = 'reactions';
+    el.appendChild(rxBox);
+    renderReactions(m.id);
     if (m.edited && !m.deleted) {
       const e = document.createElement('div'); e.className = 'edited-tag'; e.textContent = '(edited)';
       el.appendChild(e);
@@ -548,6 +1071,13 @@
     const rb = document.createElement('button'); rb.textContent = '↩ Reply';
     rb.onclick = (ev) => { ev.stopPropagation(); setReply(m.id); };
     acts.appendChild(rb);
+    if (!m.deleted) {
+      const rcb = document.createElement('button'); rcb.textContent = '😊 React';
+      rcb.onclick = (ev) => { ev.stopPropagation(); openPicker(m.id, el); };
+      const pb = document.createElement('button'); pb.textContent = '📌 Pin';
+      pb.onclick = (ev) => { ev.stopPropagation(); send({ type: 'pin', id: m.id }); };
+      acts.appendChild(rcb); acts.appendChild(pb);
+    }
     if (mine && !m.deleted) {
       const eb = document.createElement('button'); eb.textContent = '✏️';
       eb.onclick = (ev) => { ev.stopPropagation(); startEdit(m.id); };
@@ -556,6 +1086,16 @@
       acts.appendChild(eb); acts.appendChild(db);
     }
     el.appendChild(acts);
+    // long-press (touch) opens the reaction picker too
+    let pressTimer = null, pressStart = 0;
+    el.onpointerdown = (e) => {
+      if (m.deleted || (e.target && e.target.closest('button, a, audio, video, iframe'))) return;
+      pressStart = Date.now();
+      pressTimer = setTimeout(() => openPicker(m.id, el), 550);
+    };
+    el.onpointerup = el.onpointerleave = el.onpointercancel = () => clearTimeout(pressTimer);
+    el.oncontextmenu = (e) => { if (Date.now() - pressStart < 900) e.preventDefault(); };
+    if (pinnedMsgId === m.id) renderPinBar();
     updateTicks();
     scrollBottom();
   }
@@ -631,6 +1171,7 @@
   async function enterRoom(code) {
     roomCode = code;
     await ensureKey(code);   // E2E key ready before any decrypt
+    addRoom(code);           // local list + encrypted vault sync
     $('room-code').textContent = code;
     $('join-screen').classList.remove('active');
     $('room-screen').classList.add('active');
@@ -648,7 +1189,14 @@
     let m;
     try { m = JSON.parse(ev.data); } catch { return; }
 
-    if (m.type === 'room-created' || m.type === 'joined') {
+    if (m.type === 'auth-ok') {
+      return;
+    } else if (m.type === 'auth-error') {
+      localStorage.removeItem('dosti_token');
+      sessionStorage.removeItem('dosti_vault_key');
+      location.reload();
+      return;
+    } else if (m.type === 'room-created' || m.type === 'joined') {
       await enterRoom(m.roomCode);
       peers = new Map();
       peers.set(myUserId, { name: myName, avatar: myAvatar, online: true });
@@ -656,7 +1204,13 @@
       members = m.members || [];
       ticks.clear(); typingMap.clear(); renderTyping();
       messagesEl.innerHTML = ''; msgs.clear(); decCache.clear();
+      reactionsMap = buildReactions(m.reactions);
+      pinnedMsgId = null;
+      if (liveLoc) { clearInterval(liveLoc.timer); liveLoc = null; }
+      roomDisappearMs = (m.roomState && m.roomState.disappearMs) || 0;
+      $('disappear-sel').value = String(roomDisappearMs);
       for (const h of (m.history || [])) await renderMessage(h);
+      setPinned(m.roomState ? m.roomState.pinnedId : null);
       sys('Room mein aa gaye ho 🎉 — invite link doston ko bhejo.');
       renderPeers();
       sendRead();
@@ -671,10 +1225,30 @@
       if (p) {
         pending.delete(m.cid);
         if (p.kind === 'text') decCache.set(m.id, p.text);
-        else { decCache.set(m.id, { file: p.file, mime: p.mime }); mediaCache.set(p.file, p.blobUrl); }
+        else if (p.kind === 'location') {
+          decCache.set(m.id, p.meta);
+          if (p.live) liveLocStart(m.id);
+        }
+        else { decCache.set(m.id, p.meta); if (p.meta && p.meta.file && p.blobUrl) mediaCache.set(p.meta.file, p.blobUrl); }
       }
       await renderMessage(m);
       sendRead();
+    } else if (m.type === 'reaction') {
+      applyReaction(m.id, m.emoji, m.userId, m.on);
+    } else if (m.type === 'pin') {
+      setPinned(m.id);
+      if (m.id && m.by) sys(`📌 ${m.by} ne ek message pin kiya`);
+    } else if (m.type === 'disappear') {
+      roomDisappearMs = m.ms;
+      $('disappear-sel').value = String(m.ms);
+      sys(m.ms
+        ? `⏰ ${m.by} ne disappearing messages ON kiye — naye messages ${disappearLabel(m.ms)} mein gayab ho jayenge`
+        : `⏰ ${m.by} ne disappearing messages OFF kar diye`);
+    } else if (m.type === 'expire') {
+      const el = document.getElementById('m' + m.id);
+      if (el) el.remove();
+      msgs.delete(m.id); decCache.delete(m.id); reactionsMap.delete(m.id);
+      if (pinnedMsgId === m.id) setPinned(null);
     } else if (m.type === 'edit') {
       const o = msgs.get(m.id);
       if (o) { o.payload = m.payload; o.edited = true; decCache.delete(m.id); await renderMessage(o); }
@@ -711,7 +1285,7 @@
   /* ================= calls ================= */
   async function getIce() {
     if (!ICE) {
-      const c = await (await fetch('/config')).json();
+      const c = await (await fetch('/config', { headers: authHeaders() })).json();
       ICE = { iceServers: c.iceServers };
     }
     return ICE;
@@ -943,35 +1517,162 @@
   async function uploadEncrypted(ab) {
     const fd = new FormData();
     fd.append('file', new Blob([ab], { type: 'application/octet-stream' }), 'f.bin');
-    const r = await fetch('/upload?room=' + roomCode, { method: 'POST', body: fd });
+    const r = await fetch('/upload?room=' + roomCode, { method: 'POST', headers: authHeaders(), body: fd });
     const j = await r.json();
     if (!j.file) throw new Error('upload fail');
     return j.file;
   }
   async function sendMediaMessage(kind, file, blob) {
     if (!roomKey) return;
-    sys(kind === 'photo' ? '📷 Photo bheji ja rahi hai…' : '🎤 Voice note bheja ja raha hai…');
+    sys(kind === 'photo' ? '📷 Photo bheji ja rahi hai…'
+      : kind === 'video' ? '🎬 Video note bheja ja raha hai…'
+      : kind === 'file' ? '📁 File bheji ja rahi hai…'
+      : '🎤 Voice note bheja ja raha hai…');
     try {
       const enc = await encRaw(await blob.arrayBuffer());
       const fname = await uploadEncrypted(enc);
       const blobUrl = URL.createObjectURL(blob);
+      const meta = { file: fname, mime: (file && file.type) || blob.type || 'application/octet-stream' };
+      if (kind === 'file') { meta.name = (file && file.name) || 'file'; meta.size = (file && file.size) || blob.size; }
       const cid = 'c' + (cidSeq++);
-      pending.set(cid, { kind, file: fname, mime: file.type || blob.type, blobUrl });
-      const payload = await encText(JSON.stringify({ file: fname, mime: file.type || blob.type }));
+      pending.set(cid, { kind, meta, blobUrl });
+      const payload = await encText(JSON.stringify(meta));
       send({ type: 'chat', kind, payload, replyTo: replyToId, cid });
       clearReply();
-      // remove the "bheji ja rahi" sys note on echo — simplest: leave it; harmless
     } catch {
       alert('Bhejne mein masla hua, dobara try karo');
     }
   }
-  $('photo-btn').onclick = () => $('photo-input').click();
   $('photo-input').onchange = async (e) => {
     const f = e.target.files[0];
     e.target.value = '';
     if (!f) return;
-    if (f.size > 15 * 1024 * 1024) { alert('File 15MB se bari hai'); return; }
+    if (f.size > 20 * 1024 * 1024) { alert('File 20MB se bari hai'); return; }
     await sendMediaMessage('photo', f, f);
+  };
+  $('file-input').onchange = async (e) => {
+    const f = e.target.files[0];
+    e.target.value = '';
+    if (!f) return;
+    if (f.size > 20 * 1024 * 1024) { alert('File 20MB se bari hai'); return; }
+    await sendMediaMessage('file', f, f);
+  };
+
+  /* ---------- v2: attach menu ---------- */
+  function closeAttachMenu() { $('attach-menu').classList.remove('show'); }
+  $('attach-btn').onclick = (e) => { e.stopPropagation(); $('attach-menu').classList.toggle('show'); };
+  document.addEventListener('click', (e) => { if (!$('attach-menu').contains(e.target)) closeAttachMenu(); });
+  $('am-photo').onclick = () => { closeAttachMenu(); $('photo-input').click(); };
+  $('am-file').onclick = () => { closeAttachMenu(); $('file-input').click(); };
+  $('am-vnote').onclick = () => { closeAttachMenu(); openVnote(); };
+  $('am-location').onclick = () => { closeAttachMenu(); sendLocationOnce(); };
+  $('am-live').onclick = () => { closeAttachMenu(); startLiveLocation(); };
+
+  /* ---------- v2: location (one-time + live) ---------- */
+  async function sendLocationPayload(meta, live) {
+    const cid = 'c' + (cidSeq++);
+    pending.set(cid, { kind: 'location', meta, live: !!live });
+    send({ type: 'chat', kind: 'location', payload: await encText(JSON.stringify(meta)), replyTo: replyToId, cid });
+    clearReply();
+  }
+  function sendLocationOnce() {
+    if (!navigator.geolocation) { alert('Is device/browser par location nahi hai'); return; }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => sendLocationPayload({ lat: pos.coords.latitude, lng: pos.coords.longitude, live: false, ts: Date.now() }, false),
+      () => alert('Location ki permission do 📍'),
+      { enableHighAccuracy: true, timeout: 10000 });
+  }
+  function liveLocStart(id) { if (liveLoc) liveLoc.id = id; }
+  function startLiveLocation() {
+    if (!navigator.geolocation) { alert('Is device/browser par location nahi hai'); return; }
+    if (liveLoc) { alert('Live location pehle se chal rahi hai'); return; }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        liveLoc = { id: null, timer: null };
+        sendLocationPayload({ lat: pos.coords.latitude, lng: pos.coords.longitude, live: true, ended: false, ts: Date.now() }, true);
+        liveLoc.timer = setInterval(updateLiveLocation, 15000);
+        setTimeout(() => { if (liveLoc) stopLiveLocation(); }, 3600000);  // auto-stop after 1 hour
+        sys('📡 Live location shuru — har 15 second update hogi, 1 ghante tak');
+      },
+      () => alert('Location ki permission do 📍'),
+      { enableHighAccuracy: true, timeout: 10000 });
+  }
+  function updateLiveLocation() {
+    if (!liveLoc || !liveLoc.id) return;
+    const id = liveLoc.id;
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const meta = { lat: pos.coords.latitude, lng: pos.coords.longitude, live: true, ended: false, ts: Date.now() };
+        // reuse the edit flow: owner edits own message with fresh coords;
+        // the edit broadcast (incl. to self) re-renders the card in place.
+        send({ type: 'edit', id, payload: await encText(JSON.stringify(meta)) });
+      },
+      () => {},
+      { enableHighAccuracy: true, timeout: 10000 });
+  }
+  async function stopLiveLocation() {
+    if (!liveLoc) return;
+    const id = liveLoc.id;
+    clearInterval(liveLoc.timer);
+    liveLoc = null;
+    if (id) {
+      const meta = decCache.get(id);
+      if (meta && typeof meta === 'object') {
+        const fin = { lat: meta.lat, lng: meta.lng, live: true, ended: true, ts: Date.now() };
+        send({ type: 'edit', id, payload: await encText(JSON.stringify(fin)) });
+      }
+    }
+    sys('📍 Live location band ho gayi');
+  }
+
+  /* ---------- v2: video notes (round, max 60s) ---------- */
+  let vnoteStream = null, vnoteRec = null, vnoteChunks = [], vnoteTimerInt = null, vnoteStart = 0;
+  async function openVnote() {
+    $('vnote-panel').classList.add('show');
+    $('vnote-timer').textContent = '';
+    $('vnote-rec').textContent = '⏺ Record karo';
+    try {
+      vnoteStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: { facingMode: 'user' } });
+      $('vnote-video').srcObject = vnoteStream;
+    } catch {
+      $('vnote-panel').classList.remove('show');
+      alert('Camera/mic ki permission do 🎬');
+    }
+  }
+  function stopVnoteTracks() {
+    clearInterval(vnoteTimerInt);
+    if (vnoteStream) { vnoteStream.getTracks().forEach((t) => t.stop()); vnoteStream = null; }
+    $('vnote-video').srcObject = null;
+  }
+  function closeVnote() { stopVnoteTracks(); $('vnote-panel').classList.remove('show'); }
+  $('vnote-rec').onclick = () => {
+    if (vnoteRec) { try { vnoteRec.stop(); } catch {} return; }
+    if (!vnoteStream) { alert('Camera tayar nahi hai'); return; }
+    if (!window.MediaRecorder) { alert('Is browser mein video recording nahi hoti'); return; }
+    const mime = MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9'
+      : MediaRecorder.isTypeSupported('video/webm') ? 'video/webm' : '';
+    vnoteChunks = [];
+    try { vnoteRec = new MediaRecorder(vnoteStream, mime ? { mimeType: mime } : undefined); }
+    catch { alert('Is browser mein video recording nahi hoti'); return; }
+    vnoteRec.ondataavailable = (e) => { if (e.data && e.data.size) vnoteChunks.push(e.data); };
+    vnoteRec.onstop = async () => {
+      const blob = new Blob(vnoteChunks, { type: vnoteRec.mimeType || 'video/webm' });
+      vnoteRec = null;
+      closeVnote();
+      if (blob.size) await sendMediaMessage('video', blob, blob);
+    };
+    vnoteRec.start();
+    vnoteStart = Date.now();
+    $('vnote-rec').textContent = '⏹ Bhejo (stop)';
+    vnoteTimerInt = setInterval(() => {
+      const s = Math.floor((Date.now() - vnoteStart) / 1000);
+      $('vnote-timer').textContent = '🔴 ' + s + 's / 60s';
+      if (s >= 60 && vnoteRec) { try { vnoteRec.stop(); } catch {} }
+    }, 250);
+  };
+  $('vnote-cancel').onclick = () => {
+    if (vnoteRec) { vnoteRec.onstop = null; try { vnoteRec.stop(); } catch {} vnoteRec = null; }
+    closeVnote();
   };
 
   let rec = null, recChunks = [];
@@ -1007,7 +1708,7 @@
   }
   function replySnippet(m) {
     if (m.deleted) return 'deleted message';
-    if (m.kind !== 'text') return m.kind === 'photo' ? '📷 photo' : '🎤 voice note';
+    if (m.kind !== 'text') return kindLabel(m.kind);
     const t = decCache.get(m.id);
     return typeof t === 'string' ? t.slice(0, 50) : '…';
   }
@@ -1067,17 +1768,51 @@
       }
       if (Notification.permission !== 'granted') return;
       const reg = await navigator.serviceWorker.ready;
-      const cfg = await (await fetch('/config')).json();
+      const cfg = await (await fetch('/config', { headers: authHeaders() })).json();
       if (!cfg.vapidPublicKey) return;
       let sub = await reg.pushManager.getSubscription();
       if (!sub) {
         sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToU8(cfg.vapidPublicKey) });
       }
       await fetch('/push/subscribe', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ userId: myUserId, room: roomCode, sub: sub.toJSON() }),
       });
     } catch (e) { console.warn('push setup fail', e); }
+  }
+
+  /* ================= v2: chat search (client-side, decrypted) ================= */
+  let searchHits = [], searchIdx = -1, searchTimer = null;
+  function clearSearch() {
+    document.querySelectorAll('.msg.search-hit, .msg.search-cur').forEach((el) => el.classList.remove('search-hit', 'search-cur'));
+    searchHits = []; searchIdx = -1;
+    $('search-count').textContent = '';
+  }
+  async function runSearch() {
+    clearSearch();
+    const q = $('search-input').value.trim().toLowerCase();
+    if (!q) return;
+    const sorted = [...msgs.values()].filter((x) => !x.deleted).sort((a, b) => a.id - b.id);
+    for (const m of sorted) {
+      let hay = '';
+      if (m.kind === 'text') hay = await getText(m);
+      else { const meta = decCache.get(m.id); if (meta && meta.name) hay = meta.name; }
+      if (hay && String(hay).toLowerCase().includes(q)) searchHits.push(m.id);
+    }
+    for (const id of searchHits) {
+      const el = document.getElementById('m' + id);
+      if (el) el.classList.add('search-hit');
+    }
+    $('search-count').textContent = searchHits.length ? '0/' + searchHits.length : 'nahi mila';
+    if (searchHits.length) jumpSearch(0);
+  }
+  function jumpSearch(i) {
+    if (!searchHits.length) return;
+    searchIdx = ((i % searchHits.length) + searchHits.length) % searchHits.length;
+    document.querySelectorAll('.msg.search-cur').forEach((el) => el.classList.remove('search-cur'));
+    const el = document.getElementById('m' + searchHits[searchIdx]);
+    if (el) { el.classList.add('search-cur'); el.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+    $('search-count').textContent = (searchIdx + 1) + '/' + searchHits.length;
   }
 
   /* ================= UI wiring ================= */
@@ -1113,20 +1848,59 @@
       const useVideo = confirm('Video ke saath group call? (Cancel = sirf voice)');
       startGroupCall(useVideo);
     };
+
+    /* ----- v2 wiring: search / settings / pin bar / logout ----- */
+    $('search-btn').onclick = () => {
+      const bar = $('search-bar');
+      bar.classList.toggle('show');
+      if (bar.classList.contains('show')) $('search-input').focus();
+      else clearSearch();
+    };
+    $('search-input').addEventListener('input', () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(runSearch, 250);
+    });
+    $('search-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') jumpSearch(searchIdx + 1); });
+    $('search-down').onclick = () => jumpSearch(searchIdx + 1);
+    $('search-up').onclick = () => jumpSearch(searchIdx - 1);
+    $('search-close').onclick = () => { $('search-bar').classList.remove('show'); $('search-input').value = ''; clearSearch(); };
+
+    $('settings-btn').onclick = () => $('settings-panel').classList.add('show');
+    $('settings-close').onclick = () => $('settings-panel').classList.remove('show');
+    document.querySelectorAll('#theme-row button').forEach((b) => {
+      b.onclick = () => { localStorage.setItem('dosti_theme', b.dataset.themeVal || ''); applyTheme(); };
+    });
+    document.querySelectorAll('#wall-row button').forEach((b) => {
+      b.onclick = () => { localStorage.setItem('dosti_wall', b.dataset.wallVal || ''); applyTheme(); };
+    });
+    $('disappear-sel').onchange = (e) => send({ type: 'disappear', ms: Number(e.target.value) });
+
+    $('pin-bar').onclick = () => { if (pinnedMsgId) scrollToMsg(pinnedMsgId); };
+    $('pin-unpin').onclick = (e) => { e.stopPropagation(); send({ type: 'pin', id: null }); };
+
+    $('logout-btn').onclick = async () => {
+      try { await fetch('/api/auth/logout', { method: 'POST', headers: authHeaders() }); } catch {}
+      localStorage.removeItem('dosti_token');
+      sessionStorage.removeItem('dosti_vault_key');
+      location.reload();
+    };
     $('lock-now-btn').onclick = () => {
       if (!localStorage.getItem(PIN_KEY)) { alert('Pehle App Lock mein PIN set karo 🔒'); return; }
       pinFails = 0;
       showLock();
     };
     $('leave-btn').onclick = async () => {
+      const leavingCode = roomCode;
       try {
         await fetch('/push/unsubscribe', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify({ userId: myUserId, room: roomCode }),
         });
       } catch {}
+      if (liveLoc) stopLiveLocation();
       if (group) endGroupCall(); else endCall();
       sendTyping(false);
+      if (leavingCode) removeRoom(leavingCode);
       send({ type: 'leave' });
     };
 
@@ -1136,13 +1910,25 @@
     window.addEventListener('beforeunload', () => sendTyping(false));
   }
 
-  /* ================= boot (PIN gate first) ================= */
-  if (localStorage.getItem(PIN_KEY)) {
-    showLock();   // appStarted=false → unlock calls startApp()
-  } else {
-    appStarted = true;
-    startApp();
+  /* ================= boot (auth first, then PIN gate, then app) ================= */
+  async function boot() {
+    applyTheme();
+    setAuthMode('login');
+    renderRoomsList();
+    if (!authToken) { showAuth(); return; }
+    try {
+      const r = await fetch('/api/auth/me', { headers: authHeaders() });
+      if (!r.ok) throw new Error('no session');
+      const j = await r.json();
+      account = j.account;
+      afterAuth();
+    } catch {
+      localStorage.removeItem('dosti_token');
+      authToken = null;
+      showAuth();
+    }
   }
+  boot();
 })();
 </script>
 </body>
