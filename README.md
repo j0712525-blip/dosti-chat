@@ -3,6 +3,19 @@
 Apni private chat web app — text, photos, voice notes, 1:1 + group calls — sirf invite walon ke liye.
 End-to-end encrypted (room key), App Lock (PIN), push notifications, PWA install.
 
+## v2 mein naya
+
+- **👤 Email accounts** — pehle register/login (email + password). Password server par scrypt hash se store hota hai; session 30 din ka token.
+- **☁️ Cross-device rooms** — tumhare rooms password se derived key se encrypt ho kar server par (vault) save hote hain; naye device par login karte hi rooms wapas. Server ko codes kabhi nazar nahi aate.
+- **😊 Reactions** — message par long-press / 😊 button → ❤️😂😮😢😡👍; badge counts ke saath.
+- **⏰ Disappearing messages** — room settings se off / 1 ghanta / 24 ghante / 7 din; waqt par messages khud delete.
+- **📌 Pin** — koi bhi message pin karo, upar bar mein dikhega; tap karne par wahan scroll ho jata hai.
+- **🔍 Search** — purane messages mein dhoondo (client-side, decrypted), ↑/↓ se jump karo.
+- **🎨 Themes + wallpapers** — 5 color themes, 6 chat wallpapers (settings 🎨 button se).
+- **📍 Location** — ek dafa ki location ya **live location** (har 15s update, 1 ghanta max, kabhi bhi band) — coordinates E2E encrypted.
+- **🎬 Video notes** — gol (round) video note, 60 second tak.
+- **📁 File sharing** — koi bhi file (20MB tak), encrypted upload, file card se download.
+
 ## Chalane ka tareeqa
 
 ```bash

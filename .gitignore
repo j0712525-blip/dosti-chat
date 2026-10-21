@@ -1,6 +1,5 @@
 node_modules/
 data/
-uploads/*
-!.gitkeep
+uploads/
 .vapid.json
 *.log
