@@ -218,6 +218,61 @@
   #vnote-video { width: 240px; height: 240px; border-radius: 50%; object-fit: cover; background: #000; display: block; margin: 0 auto 14px; }
   #vnote-timer { text-align: center; font-size: 15px; margin-bottom: 12px; color: #fbbf24; min-height: 20px; }
   #room-screen { position: relative; }
+
+  /* ---------- v3: dashboard / contacts / presence / profile ---------- */
+  #join-screen { align-items: stretch; justify-content: flex-start; padding: 0; overflow: hidden; }
+  #dash { display: flex; flex-direction: column; flex: 1; min-height: 0; position: relative; width: 100%; max-width: 640px; margin: 0 auto; }
+  #dash-header { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: var(--panel, #18202f); border-bottom: 1px solid var(--border, #232d45); }
+  #dash-me { display: flex; align-items: center; gap: 11px; background: none; border: none; color: inherit; cursor: pointer; padding: 2px; text-align: left; min-width: 0; }
+  .avatar-circle { width: 44px; height: 44px; border-radius: 50%; background: var(--panel2, #232d45); display: inline-flex; align-items: center; justify-content: center; font-size: 22px; overflow: hidden; flex-shrink: 0; position: relative; }
+  .avatar-circle img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .avatar-circle.big { width: 76px; height: 76px; font-size: 38px; }
+  .avatar-circle.sm { width: 36px; height: 36px; font-size: 18px; }
+  .online-dot { position: absolute; right: -1px; bottom: -1px; width: 13px; height: 13px; border-radius: 50%; background: #4ade80; border: 2px solid var(--panel, #18202f); z-index: 2; }
+  .dash-me-text { display: flex; flex-direction: column; min-width: 0; }
+  #dash-myname { font-size: 18px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #dash-sub { font-size: 12px; color: var(--muted, #9aa6bd); }
+  #dash-search-wrap { padding: 10px 14px 2px; }
+  #dash-search { width: 100%; padding: 11px 14px; border-radius: 22px; border: 1px solid var(--border, #2b3650); background: var(--input, #0f1420); color: #fff; font-size: 15px; outline: none; }
+  .sect-title { font-size: 13px; font-weight: 700; letter-spacing: .4px; color: var(--muted, #9aa6bd); text-transform: uppercase; padding: 14px 16px 8px; }
+  #online-strip { display: flex; gap: 14px; padding: 2px 16px 6px; overflow-x: auto; min-height: 74px; }
+  .strip-item { display: flex; flex-direction: column; align-items: center; gap: 5px; background: none; border: none; color: inherit; cursor: pointer; width: 60px; flex-shrink: 0; }
+  .strip-item .nm { font-size: 12px; max-width: 60px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .strip-empty { color: var(--muted, #5c6a88); font-size: 13px; padding: 8px 0; }
+  #dash-scroll { flex: 1; overflow-y: auto; min-height: 0; padding-bottom: 92px; }
+  .chat-row, .contact-row, .user-row { display: flex; align-items: center; gap: 12px; width: 100%; background: none; border: none; color: inherit; text-align: left; padding: 10px 16px; }
+  .chat-row, .contact-row { cursor: pointer; }
+  .chat-row:active, .contact-row:active { background: rgba(255,255,255,.05); }
+  .row-main { flex: 1; min-width: 0; }
+  .row-name { font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row-sub { font-size: 13px; color: var(--muted, #9aa6bd); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+  .row-sub.on { color: #4ade80; }
+  .row-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+  .row-time { font-size: 11px; color: var(--muted, #9aa6bd); }
+  .unread-badge { background: #25d366; color: #04240f; font-size: 11px; font-weight: 800; border-radius: 999px; min-width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; padding: 0 6px; }
+  .dash-empty { color: var(--muted, #5c6a88); font-size: 13px; padding: 2px 16px 8px; }
+  #requests-list { padding: 0 12px; display: flex; flex-direction: column; gap: 8px; }
+  .req-card { display: flex; align-items: center; gap: 11px; background: var(--panel, #18202f); border: 1px solid var(--border, #2b3650); border-radius: 14px; padding: 10px 12px; }
+  .req-btns { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+  .req-btns button { border: none; border-radius: 8px; padding: 7px 12px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .btn-accept { background: #16a34a; color: #fff; }
+  .btn-decline { background: var(--panel2, #232d45); color: #dbe2f0; }
+  .outgoing-row { font-size: 13px; color: var(--muted, #9aa6bd); padding: 2px 4px; }
+  #fab-btn { position: absolute; right: 18px; bottom: calc(20px + env(safe-area-inset-bottom)); width: 58px; height: 58px; border-radius: 50%; border: none; background: var(--accent, #4f7cff); color: #fff; font-size: 26px; cursor: pointer; box-shadow: 0 8px 22px rgba(0,0,0,.45); z-index: 30; }
+  #fab-menu { display: none; position: absolute; right: 18px; bottom: calc(90px + env(safe-area-inset-bottom)); background: var(--panel2, #232d45); border: 1px solid var(--border, #2b3650); border-radius: 14px; padding: 8px; z-index: 30; box-shadow: 0 10px 30px rgba(0,0,0,.5); flex-direction: column; gap: 2px; min-width: 230px; }
+  #fab-menu.show { display: flex; }
+  #fab-menu button { background: none; border: none; color: #eef1f6; text-align: left; font-size: 15px; padding: 11px 12px; border-radius: 9px; cursor: pointer; }
+  #fab-menu button:active { background: rgba(255,255,255,.1); }
+  .profile-top { display: flex; align-items: center; gap: 16px; margin-bottom: 6px; }
+  .profile-hint { color: var(--muted, #9aa6bd); font-size: 12px; margin-top: 6px; }
+  #profile-msg { font-size: 13px; min-height: 18px; color: #4ade80; margin-top: 4px; }
+  .user-row { padding: 10px 2px; }
+  .user-row .icon-btn { flex-shrink: 0; }
+  #dm-head { display: none; align-items: center; gap: 9px; min-width: 0; }
+  .dm-meta { display: flex; flex-direction: column; min-width: 0; }
+  #dm-title { font-size: 16px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #dm-presence { font-size: 12px; color: var(--muted, #9aa6bd); }
+  #dm-presence.on { color: #4ade80; }
 </style>
 </head>
 <body>
@@ -257,28 +312,90 @@
   </div>
 </div>
 
-<!-- JOIN -->
+<!-- JOIN / DASHBOARD -->
 <div id="join-screen" class="screen">
-  <div class="card">
-    <h1>💬 Dosti Chat</h1>
-    <p>Apni private chat — sirf invite walon ke liye. 🔒 End-to-end encrypted.</p>
-    <span class="avatar-label">Apna avatar chuno:</span>
-    <div class="avatar-grid" id="avatar-grid"></div>
-    <input id="name-input" placeholder="Tumhara naam" maxlength="30" autocomplete="off">
-    <div id="join-error"></div>
-    <button class="btn btn-primary" id="create-btn">Naya room banao</button>
-    <div class="divider">ya</div>
-    <input id="code-input" placeholder="Invite code (jaise: KX7P2Q)" maxlength="6" autocomplete="off" style="text-transform:uppercase">
-    <button class="btn btn-ghost" id="join-btn">Room join karo</button>
-
-    <div class="divider">mere rooms</div>
-    <div id="rooms-list"></div>
-    <div id="rooms-empty">Abhi koi room nahi — naya banao ya code se join karo.</div>
-
-    <div class="account-row">
-      <span class="who-acc">👤 <span id="account-email">—</span></span>
-      <button class="icon-btn" id="logout-btn">Logout</button>
+  <div id="dash">
+    <header id="dash-header">
+      <button id="dash-me" title="Meri profile">
+        <span id="dash-avatar" class="avatar-circle">😎</span>
+        <span class="dash-me-text"><span id="dash-myname">Dosti Chat</span><span id="dash-sub">Meri profile • settings ⚙️</span></span>
+      </button>
+      <span class="spacer" style="flex:1"></span>
+      <button class="icon-btn" id="dash-lock-btn" title="App lock">🔒</button>
+    </header>
+    <div id="dash-search-wrap"><input id="dash-search" placeholder="🔍 Chat ya contact dhoondo…" autocomplete="off"></div>
+    <div class="sect-title">Abhi online 🟢</div>
+    <div id="online-strip"><span class="strip-empty">Abhi koi online nahi</span></div>
+    <div id="requests-section" style="display:none">
+      <div class="sect-title">👋 Naye contact requests</div>
+      <div id="requests-list"></div>
     </div>
+    <div id="dash-scroll">
+      <div class="sect-title">💬 Chats</div>
+      <div id="chats-list"></div>
+      <div id="chats-empty" class="dash-empty">Abhi koi chat nahi — ➕ se naya room banao ya contact add karo.</div>
+      <div class="sect-title">👥 Contacts</div>
+      <div id="contacts-list"></div>
+      <div id="contacts-empty" class="dash-empty">Abhi koi contact nahi — ➕ → Contact add karo.</div>
+    </div>
+    <button id="fab-btn" title="Naya">➕</button>
+    <div id="fab-menu">
+      <button id="fab-room">🏠 Naya room banao</button>
+      <button id="fab-join">🔑 Code se room join karo</button>
+      <button id="fab-add">👤 Contact add karo</button>
+    </div>
+  </div>
+
+  <!-- room create / join -->
+  <div id="room-panel" class="modal-panel">
+    <div class="card">
+      <h3>🏠 Room</h3>
+      <span class="avatar-label">Apna avatar chuno:</span>
+      <div class="avatar-grid" id="avatar-grid"></div>
+      <input id="name-input" placeholder="Tumhara naam" maxlength="30" autocomplete="off">
+      <div id="join-error"></div>
+      <button class="btn btn-primary" id="create-btn">Naya room banao</button>
+      <div class="divider">ya code se join karo</div>
+      <input id="code-input" placeholder="Invite code (jaise: KX7P2Q)" maxlength="6" autocomplete="off" style="text-transform:uppercase">
+      <button class="btn btn-ghost" id="join-btn">Room join karo</button>
+      <button class="btn btn-ghost" id="room-panel-close">Band karo</button>
+    </div>
+  </div>
+
+  <!-- add contact -->
+  <div id="add-panel" class="modal-panel">
+    <div class="card">
+      <h3>👤 Contact add karo</h3>
+      <p>Naam, email ya phone number se dhoondo — personal chat ke liye.</p>
+      <input id="user-search-input" placeholder="Naam / email / phone…" autocomplete="off">
+      <button class="btn btn-primary" id="user-search-btn">Dhoondo</button>
+      <div id="user-search-results"></div>
+      <button class="btn btn-ghost" id="add-panel-close">Band karo</button>
+    </div>
+  </div>
+
+  <!-- meri profile -->
+  <div id="profile-panel" class="modal-panel">
+    <div class="card">
+      <h3>👤 Meri Profile</h3>
+      <div class="profile-top">
+        <span id="profile-avatar" class="avatar-circle big">😎</span>
+        <div>
+          <button class="icon-btn" id="photo-btn">📷 Photo lagao</button>
+          <div class="profile-hint">Photo square crop ho kar 256×256 save hogi</div>
+        </div>
+      </div>
+      <input type="file" id="profile-photo-input" class="hidden-input" accept="image/*">
+      <span class="set-label">Naam</span>
+      <input id="profile-name" placeholder="Tumhara naam" maxlength="30" autocomplete="off">
+      <span class="set-label">Phone number (optional)</span>
+      <input id="profile-phone" placeholder="+92 300 1234567" maxlength="20" inputmode="tel" autocomplete="off">
+      <div id="profile-msg"></div>
+      <button class="btn btn-primary" id="profile-save">Save karo</button>
+      <div class="account-row">
+        <span class="who-acc">👤 <span id="account-email">—</span></span>
+        <button class="icon-btn" id="logout-btn">Logout</button>
+      </div>
 
     <div class="lock-settings">
       <div class="lock-row"><span>🔒 App Lock</span><span class="st" id="lock-state">Off</span></div>
@@ -298,12 +415,19 @@
       </div>
       <div id="lock-msg"></div>
     </div>
+      <div style="height:14px"></div>
+      <button class="btn btn-ghost" id="profile-close">Band karo</button>
+    </div>
   </div>
 </div>
 
 <!-- ROOM -->
 <div id="room-screen" class="screen">
   <div id="room-header">
+    <div id="dm-head">
+      <span id="dm-avatar" class="avatar-circle sm">🙂</span>
+      <span class="dm-meta"><span id="dm-title">—</span><span id="dm-presence"></span></span>
+    </div>
     <span class="code" id="room-code"></span>
     <button class="icon-btn" id="copy-btn">🔗 Invite</button>
     <button class="icon-btn" id="group-call-btn">👥 Group call</button>
@@ -580,6 +704,20 @@
   let liveLoc = null;                     // {id, timer}
   const REACTION_EMOJIS = ['❤️', '😂', '😮', '😢', '😡', '👍'];
 
+  /* ================= v3 state: contacts / DMs / presence / keys ================= */
+  let contacts = [];                      // GET /api/contacts rows (server-saved)
+  let contactReqs = { incoming: [], outgoing: [] };
+  let pendingDMs = {};                    // dmRoomId -> {code, toId, name} (requester stash)
+  let vaultExtras = { keys: null, pendingDMs: {} };  // vault payload extras (v3)
+  let myKeys = null;                      // {pubJwk, privJwk, privKey} — RSA-OAEP for DMs
+  let convMeta = new Map();               // room code -> {ts, preview, unread}
+  let keyCache = new Map();               // room code -> AES key (preview decryption)
+  let avatarUrlCache = new Map();         // accountId@ver -> blob URL
+  let lastRead = {};                      // room code -> ts (localStorage)
+  try { lastRead = JSON.parse(localStorage.getItem('dosti_lastread') || '{}') || {}; } catch { lastRead = {}; }
+  let currentContactId = null;            // account id when the open room is a DM
+  let dashFilter = '';
+
   function authHeaders(extra) {
     return Object.assign({ Authorization: 'Bearer ' + (authToken || '') }, extra || {});
   }
@@ -600,33 +738,25 @@
     catch { return []; }
   }
   function saveLocalRooms() { localStorage.setItem('dosti_rooms', JSON.stringify(myRooms)); }
-  function addRoom(code, name) {
-    if (!code || myRooms.some((r) => r.code === code)) return;
-    myRooms.unshift({ code, name: name || '' });
+  function addRoom(code, name, dmId, dmRoomId) {
+    if (!code) return;
+    const ex = myRooms.find((r) => r.code === code);
+    if (ex) {
+      if (dmId && !ex.dm) {
+        ex.dm = dmId; ex.dmRoomId = dmRoomId || null;
+        if (name) ex.name = name;
+        saveLocalRooms(); renderRoomsList(); vaultSave();
+      }
+      return;
+    }
+    myRooms.unshift({ code, name: name || '', dm: dmId || null, dmRoomId: dmRoomId || null });
     saveLocalRooms(); renderRoomsList(); vaultSave();
   }
   function removeRoom(code) {
     myRooms = myRooms.filter((r) => r.code !== code);
     saveLocalRooms(); renderRoomsList(); vaultSave();
   }
-  function renderRoomsList() {
-    const box = $('rooms-list');
-    if (!box) return;
-    box.innerHTML = '';
-    $('rooms-empty').style.display = myRooms.length ? 'none' : '';
-    for (const r of myRooms) {
-      const d = document.createElement('div'); d.className = 'room-item';
-      const c = document.createElement('span'); c.className = 'rc'; c.textContent = r.code;
-      const n = document.createElement('span'); n.className = 'rn'; n.textContent = r.name || '';
-      const j = document.createElement('button'); j.textContent = 'Join';
-      j.onclick = () => { $('code-input').value = r.code; $('join-btn').click(); };
-      const rm = document.createElement('button'); rm.className = 'rm'; rm.textContent = '✖';
-      rm.title = 'List se hatao';
-      rm.onclick = () => removeRoom(r.code);
-      d.appendChild(c); d.appendChild(n); d.appendChild(j); d.appendChild(rm);
-      box.appendChild(d);
-    }
-  }
+  function renderRoomsList() { renderDashboard(); }
 
   /* ---------- vault: rooms encrypted with a password-derived key ---------- */
   async function deriveVaultKey(password) {
@@ -650,7 +780,7 @@
   async function vaultSave() {
     if (!vaultKey || !authToken) return;
     try {
-      const blob = await vaultEncrypt({ rooms: myRooms });
+      const blob = await vaultEncrypt({ rooms: myRooms, keys: vaultExtras.keys, pendingDMs: vaultExtras.pendingDMs });
       await fetch('/api/vault', {
         method: 'PUT', headers: authHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ blob }),
@@ -669,12 +799,15 @@
         const remote = (data && Array.isArray(data.rooms)) ? data.rooms : [];
         for (const rm of remote) {
           if (rm && rm.code && !myRooms.some((x) => x.code === rm.code)) {
-            myRooms.push({ code: rm.code, name: rm.name || '' });
+            myRooms.push({ code: rm.code, name: rm.name || '', dm: rm.dm || null, dmRoomId: rm.dmRoomId || null });
           }
         }
+        if (data && data.keys) vaultExtras.keys = data.keys;
+        if (data && data.pendingDMs) { vaultExtras.pendingDMs = data.pendingDMs; pendingDMs = data.pendingDMs; }
         saveLocalRooms(); renderRoomsList();
       }
     } catch {}
+    await loadKeysFromVault();
     vaultSave();
   }
   async function restoreVaultKey() {
@@ -702,6 +835,14 @@
     $('auth-screen').classList.remove('active');
     $('join-screen').classList.add('active');
     await restoreVaultKey();
+    if (account && !myName) {
+      myName = account.name || '';
+      localStorage.setItem('dosti_name', myName);
+    }
+    $('name-input').value = myName;
+    if (vaultKey) await vaultLoadMerge();
+    await ensurePubKey();
+    refreshContacts();
     renderRoomsList();
     if (localStorage.getItem(PIN_KEY)) {
       appStarted = false;
@@ -756,6 +897,7 @@
     roomKey = await crypto.subtle.deriveKey(
       { name: 'PBKDF2', salt: new TextEncoder().encode('dosti-chat-v1'), iterations: 100000, hash: 'SHA-256' },
       km, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+    keyCache.set(code, roomKey);
   }
   function b64e(buf) {
     const b = new Uint8Array(buf); let s = '';
@@ -805,7 +947,7 @@
     ws = new WebSocket(proto + location.host + '/ws');
     ws.onopen = () => { try { ws.send(JSON.stringify({ type: 'auth', token: authToken })); } catch {} };
     ws.onmessage = (ev) => { onMsg(ev).catch((e) => console.warn(e)); };
-    ws.onclose = () => setTimeout(() => { if ($('room-screen').classList.contains('active')) connect(); }, 2000);
+    ws.onclose = () => setTimeout(() => { if (appStarted) connect(); }, 2000);
   }
   function send(o) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(o)); }
 
@@ -1182,6 +1324,21 @@
         setTimeout(() => $('copy-btn').textContent = '🔗 Invite', 1500);
       });
     };
+    const entry = myRooms.find((r) => r.code === code);
+    currentContactId = entry && entry.dm ? entry.dm : null;
+    const isDM = !!currentContactId;
+    $('dm-head').style.display = isDM ? 'flex' : 'none';
+    $('room-code').style.display = isDM ? 'none' : '';
+    $('copy-btn').style.display = isDM ? 'none' : '';
+    $('group-call-btn').style.display = isDM ? 'none' : '';
+    if (isDM) {
+      const c = contacts.find((x) => x.contactId === currentContactId);
+      $('dm-title').textContent = c ? c.name : (entry.name || 'Chat');
+      const da = $('dm-avatar');
+      da.textContent = '🙂';
+      if (c && c.hasAvatar) fillAvatar(da, c.contactId, c.avatarVer || 0);
+      renderDmPresence();
+    }
     setupPush();
   }
 
@@ -1190,6 +1347,7 @@
     try { m = JSON.parse(ev.data); } catch { return; }
 
     if (m.type === 'auth-ok') {
+      refreshContacts();
       return;
     } else if (m.type === 'auth-error') {
       localStorage.removeItem('dosti_token');
@@ -1211,6 +1369,12 @@
       $('disappear-sel').value = String(roomDisappearMs);
       for (const h of (m.history || [])) await renderMessage(h);
       setPinned(m.roomState ? m.roomState.pinnedId : null);
+      const histTail = (m.history || [])[(m.history || []).length - 1];
+      if (histTail) {
+        lastRead[m.roomCode] = Math.max(lastRead[m.roomCode] || 0, histTail.ts);
+        saveLastRead();
+        convMeta.set(m.roomCode, { ts: histTail.ts, preview: await previewOfMsg(histTail), unread: 0 });
+      }
       sys('Room mein aa gaye ho 🎉 — invite link doston ko bhejo.');
       renderPeers();
       sendRead();
@@ -1233,6 +1397,11 @@
       }
       await renderMessage(m);
       sendRead();
+      if (roomCode) {
+        lastRead[roomCode] = Math.max(lastRead[roomCode] || 0, m.ts);
+        saveLastRead();
+        convMeta.set(roomCode, { ts: m.ts, preview: await previewOfMsg(m), unread: 0 });
+      }
     } else if (m.type === 'reaction') {
       applyReaction(m.id, m.emoji, m.userId, m.on);
     } else if (m.type === 'pin') {
@@ -1277,6 +1446,13 @@
       if (callPeer === m.id) endCall('Samne wala chala gaya');
     } else if (m.type === 'signal') {
       onSignal(m.from, m.name, m.data);
+    } else if (m.type === 'presence') {
+      const c = contacts.find((x) => x.contactId === m.contactId);
+      if (c) { c.online = !!m.online; c.lastSeen = m.lastSeen || c.lastSeen || 0; }
+      renderOnlineStrip(); renderContactsList();
+      if (currentContactId === m.contactId) renderDmPresence();
+    } else if (m.type === 'contact-request' || m.type === 'contacts-changed') {
+      refreshContacts();
     } else if (m.type === 'left') {
       location.reload();
     }
@@ -1815,6 +1991,509 @@
     $('search-count').textContent = (searchIdx + 1) + '/' + searchHits.length;
   }
 
+  /* ================= v3: keys / contacts / dashboard / profile ================= */
+  function saveLastRead() { try { localStorage.setItem('dosti_lastread', JSON.stringify(lastRead)); } catch {} }
+  function fmtRowTime(ts) {
+    const d = new Date(ts), now = new Date();
+    if (d.toDateString() === now.toDateString()) return fmtTime(ts);
+    const y = new Date(now); y.setDate(now.getDate() - 1);
+    if (d.toDateString() === y.toDateString()) return 'Kal';
+    return d.toLocaleDateString([], { day: 'numeric', month: 'short' });
+  }
+  async function sha256hex(text) {
+    const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+    return [...new Uint8Array(h)].map((x) => x.toString(16).padStart(2, '0')).join('');
+  }
+  function makeRoomCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    const r = crypto.getRandomValues(new Uint8Array(6));
+    let c = '';
+    for (let i = 0; i < 6; i++) c += chars[r[i] % chars.length];
+    return c;
+  }
+  /* ----- DM keys: RSA-OAEP pair; public on server, private ONLY in vault ----- */
+  async function rsaEncryptTo(jwk, text) {
+    const pub = await crypto.subtle.importKey('jwk', jwk, { name: 'RSA-OAEP', hash: 'SHA-256' }, false, ['encrypt']);
+    const ct = await crypto.subtle.encrypt({ name: 'RSA-OAEP' }, pub, new TextEncoder().encode(text));
+    return b64e(ct);
+  }
+  async function rsaDecrypt(b64) {
+    const pt = await crypto.subtle.decrypt({ name: 'RSA-OAEP' }, myKeys.privKey, b64d(b64));
+    return new TextDecoder().decode(pt);
+  }
+  async function loadKeysFromVault() {
+    myKeys = null;
+    if (!vaultExtras.keys) return;
+    try {
+      const privKey = await crypto.subtle.importKey('jwk', vaultExtras.keys.priv,
+        { name: 'RSA-OAEP', hash: 'SHA-256' }, true, ['decrypt']);
+      myKeys = { pubJwk: vaultExtras.keys.pub, privJwk: vaultExtras.keys.priv, privKey };
+    } catch { myKeys = null; }
+  }
+  async function uploadPubKey(jwk) {
+    try {
+      await fetch('/api/auth/pubkey', {
+        method: 'PUT', headers: authHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ pubKey: jwk }),
+      });
+    } catch {}
+  }
+  async function generateKeys() {
+    const pair = await crypto.subtle.generateKey(
+      { name: 'RSA-OAEP', modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: 'SHA-256' },
+      true, ['encrypt', 'decrypt']);
+    const pubJwk = await crypto.subtle.exportKey('jwk', pair.publicKey);
+    const privJwk = await crypto.subtle.exportKey('jwk', pair.privateKey);
+    vaultExtras.keys = { pub: pubJwk, priv: privJwk };
+    myKeys = { pubJwk, privJwk, privKey: pair.privateKey };
+    await uploadPubKey(pubJwk);
+    vaultSave();
+  }
+  // Runs after login: upload the vault keypair's public half if the server
+  // lacks it, or mint a fresh pair (only possible with the vault open).
+  async function ensurePubKey() {
+    if (!authToken) return;
+    try {
+      const r = await fetch('/api/auth/me', { headers: authHeaders() });
+      const j = await r.json().catch(() => ({}));
+      if (j && j.account) account = j.account;
+      const serverPub = (j && j.pubKey) || null;
+      if (myKeys) {
+        if (!serverPub || JSON.stringify(serverPub) !== JSON.stringify(myKeys.pubJwk)) {
+          await uploadPubKey(myKeys.pubJwk);
+        }
+        if (account) account.hasPubKey = true;
+      } else if (!serverPub && vaultKey) {
+        await generateKeys();
+        if (account) account.hasPubKey = true;
+      }
+    } catch {}
+  }
+  /* ----- per-room keys for dashboard previews ----- */
+  async function keyFor(code) {
+    if (code === roomCode && roomKey) return roomKey;
+    if (keyCache.has(code)) return keyCache.get(code);
+    const km = await crypto.subtle.importKey('raw', new TextEncoder().encode(code), 'PBKDF2', false, ['deriveKey']);
+    const k = await crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt: new TextEncoder().encode('dosti-chat-v1'), iterations: 100000, hash: 'SHA-256' },
+      km, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+    keyCache.set(code, k);
+    return k;
+  }
+  async function decTextK(key, p) {
+    const b = new Uint8Array(b64d(p));
+    const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b.slice(0, 12) }, key, b.slice(12));
+    return new TextDecoder().decode(pt);
+  }
+  async function previewOfMsg(m) {
+    if (!m) return '';
+    if (m.deleted) return '🗑 deleted message';
+    if (m.kind === 'text') {
+      const t = decCache.get(m.id);
+      return String(typeof t === 'string' ? t : await getText(m)).slice(0, 80);
+    }
+    return kindLabel(m.kind);
+  }
+  /* ----- avatars: photos are fetched with auth → blob URL (img tags can't send Bearer) ----- */
+  function fillAvatar(el, id, ver) {
+    const key = id + '@' + ver;
+    const apply = (url) => {
+      [...el.childNodes].forEach((n) => { if (n.nodeType === 3 || n.tagName === 'IMG') n.remove(); });
+      const img = document.createElement('img');
+      img.src = url; img.alt = '';
+      el.prepend(img);
+    };
+    if (avatarUrlCache.has(key)) { apply(avatarUrlCache.get(key)); return; }
+    fetch('/api/users/' + id + '/avatar?v=' + ver, { headers: authHeaders() })
+      .then((r) => (r.ok ? r.blob() : null))
+      .then((b) => {
+        if (!b) return;
+        const u = URL.createObjectURL(b);
+        avatarUrlCache.set(key, u);
+        apply(u);
+      })
+      .catch(() => {});
+  }
+  function avatarNode(o) {
+    const s = document.createElement('span');
+    s.className = 'avatar-circle' + (o.cls ? ' ' + o.cls : '');
+    s.textContent = o.emoji || (o.name ? o.name.trim().charAt(0).toUpperCase() : '🙂');
+    if (o.hasAvatar && o.id) fillAvatar(s, o.id, o.avatarVer || 0);
+    if (o.online) {
+      const d = document.createElement('span');
+      d.className = 'online-dot';
+      s.appendChild(d);
+    }
+    return s;
+  }
+  function presenceText(c) {
+    if (!c) return '';
+    return c.online ? 'online' : (c.lastSeen ? 'last seen ' + lastSeenText(c.lastSeen) : 'offline');
+  }
+  /* ----- contacts sync ----- */
+  async function refreshContacts() {
+    if (!authToken) return;
+    try {
+      const [cr, rr] = await Promise.all([
+        fetch('/api/contacts', { headers: authHeaders() }).then((r) => r.json()).catch(() => null),
+        fetch('/api/contacts/requests', { headers: authHeaders() }).then((r) => r.json()).catch(() => null),
+      ]);
+      if (cr && cr.ok) contacts = cr.contacts || [];
+      if (rr && rr.ok) contactReqs = { incoming: rr.incoming || [], outgoing: rr.outgoing || [] };
+      reconcileDMRooms();
+      renderDashboard();
+      refreshPreviews();
+    } catch {}
+  }
+  // Requester side: once the contact row exists, turn the stashed pending
+  // DM (code kept locally / in the vault) into a real room entry.
+  function reconcileDMRooms() {
+    let changed = false;
+    for (const c of contacts) {
+      if (myRooms.some((r) => r.dmRoomId === c.dmRoomId || r.dm === c.contactId)) continue;
+      const p = pendingDMs[c.dmRoomId];
+      if (p && p.code) {
+        myRooms.unshift({ code: p.code, name: c.name, dm: c.contactId, dmRoomId: c.dmRoomId });
+        delete pendingDMs[c.dmRoomId];
+        vaultExtras.pendingDMs = pendingDMs;
+        changed = true;
+      }
+    }
+    if (changed) { saveLocalRooms(); renderRoomsList(); vaultSave(); }
+  }
+  /* ----- dashboard renderers ----- */
+  function renderDashboard() {
+    renderDashHead();
+    renderOnlineStrip();
+    renderRequests();
+    renderChatsList();
+    renderContactsList();
+  }
+  function renderDashHead() {
+    if (!account) return;
+    $('dash-myname').textContent = account.name || 'Dosti Chat';
+    const av = $('dash-avatar');
+    av.textContent = myAvatar;
+    if (account.hasAvatar) fillAvatar(av, account.id, account.avatarVer || 0);
+    const pa = $('profile-avatar');
+    if (pa) {
+      pa.textContent = myAvatar;
+      if (account.hasAvatar) fillAvatar(pa, account.id, account.avatarVer || 0);
+    }
+    const pn = $('profile-name');
+    if (pn && document.activeElement !== pn) pn.value = account.name || '';
+    const pp = $('profile-phone');
+    if (pp && document.activeElement !== pp) pp.value = account.phone || '';
+  }
+  function renderOnlineStrip() {
+    const box = $('online-strip');
+    if (!box) return;
+    box.innerHTML = '';
+    const on = contacts.filter((c) => c.online);
+    if (!on.length) {
+      const s = document.createElement('span');
+      s.className = 'strip-empty'; s.textContent = 'Abhi koi online nahi';
+      box.appendChild(s);
+      return;
+    }
+    for (const c of on) {
+      const b = document.createElement('button');
+      b.className = 'strip-item';
+      b.appendChild(avatarNode({ id: c.contactId, hasAvatar: c.hasAvatar, avatarVer: c.avatarVer, name: c.name, online: true }));
+      const nm = document.createElement('span');
+      nm.className = 'nm'; nm.textContent = (c.name || '').split(' ')[0];
+      b.appendChild(nm);
+      b.onclick = () => openDM(c);
+      box.appendChild(b);
+    }
+  }
+  function renderRequests() {
+    const sec = $('requests-section');
+    const box = $('requests-list');
+    if (!sec || !box) return;
+    box.innerHTML = '';
+    sec.style.display = (contactReqs.incoming.length || contactReqs.outgoing.length) ? '' : 'none';
+    for (const r of contactReqs.incoming) {
+      const card = document.createElement('div'); card.className = 'req-card';
+      card.appendChild(avatarNode({ id: r.fromId, hasAvatar: r.hasAvatar, avatarVer: r.avatarVer, name: r.fromName }));
+      const main = document.createElement('div'); main.className = 'row-main';
+      const nm = document.createElement('div'); nm.className = 'row-name'; nm.textContent = r.fromName;
+      const sub = document.createElement('div'); sub.className = 'row-sub';
+      sub.textContent = r.fromEmail + (r.fromPhone ? ' • ' + r.fromPhone : '');
+      main.appendChild(nm); main.appendChild(sub);
+      card.appendChild(main);
+      const btns = document.createElement('div'); btns.className = 'req-btns';
+      const ac = document.createElement('button'); ac.className = 'btn-accept'; ac.textContent = '✓ Accept';
+      ac.onclick = () => acceptRequest(r);
+      const dc = document.createElement('button'); dc.className = 'btn-decline'; dc.textContent = '✖ Decline';
+      dc.onclick = () => declineRequest(r.id);
+      btns.appendChild(ac); btns.appendChild(dc);
+      card.appendChild(btns);
+      box.appendChild(card);
+    }
+    for (const r of contactReqs.outgoing) {
+      const d = document.createElement('div'); d.className = 'outgoing-row';
+      d.textContent = '⏳ ' + r.toName + ' ko request bheja hua hai…';
+      box.appendChild(d);
+    }
+  }
+  function conversationsList() {
+    const out = [];
+    for (const r of myRooms) {
+      const c = r.dm ? (contacts.find((x) => x.contactId === r.dm) || null) : null;
+      out.push({
+        code: r.code, dm: r.dm || null, contact: c,
+        name: r.dm ? (c ? c.name : (r.name || 'Contact')) : (r.name || ('Room ' + r.code)),
+        meta: convMeta.get(r.code) || null,
+      });
+    }
+    out.sort((a, b) => ((b.meta && b.meta.ts) || 0) - ((a.meta && a.meta.ts) || 0));
+    return out;
+  }
+  function renderChatsList() {
+    const box = $('chats-list');
+    if (!box) return;
+    box.innerHTML = '';
+    const f = dashFilter;
+    const convs = conversationsList().filter((c) => !f || c.name.toLowerCase().includes(f));
+    $('chats-empty').style.display = convs.length ? 'none' : '';
+    for (const c of convs) {
+      const row = document.createElement('button');
+      row.className = 'chat-row';
+      row.appendChild(c.dm && c.contact
+        ? avatarNode({ id: c.contact.contactId, hasAvatar: c.contact.hasAvatar, avatarVer: c.contact.avatarVer, name: c.contact.name, online: c.contact.online })
+        : avatarNode({ emoji: c.dm ? '👤' : '🏠', name: c.name }));
+      const main = document.createElement('div'); main.className = 'row-main';
+      const nm = document.createElement('div'); nm.className = 'row-name'; nm.textContent = c.name;
+      const sub = document.createElement('div'); sub.className = 'row-sub';
+      sub.textContent = (c.meta && c.meta.preview) ? c.meta.preview
+        : (c.dm ? presenceText(c.contact) : ('Room • ' + c.code));
+      main.appendChild(nm); main.appendChild(sub);
+      row.appendChild(main);
+      const right = document.createElement('div'); right.className = 'row-right';
+      if (c.meta && c.meta.ts) {
+        const t = document.createElement('span'); t.className = 'row-time';
+        t.textContent = fmtRowTime(c.meta.ts);
+        right.appendChild(t);
+      }
+      if (c.meta && c.meta.unread > 0) {
+        const b = document.createElement('span'); b.className = 'unread-badge';
+        b.textContent = c.meta.unread > 99 ? '99+' : c.meta.unread;
+        right.appendChild(b);
+      }
+      row.appendChild(right);
+      row.onclick = () => {
+        if (c.dm && c.contact) openDM(c.contact);
+        else if (c.dm) alert('Is DM ka code is device par nahi hai');
+        else openRoomByCode(c.code);
+      };
+      box.appendChild(row);
+    }
+  }
+  function renderContactsList() {
+    const box = $('contacts-list');
+    if (!box) return;
+    box.innerHTML = '';
+    const f = dashFilter;
+    const list = contacts.filter((c) => !f
+      || c.name.toLowerCase().includes(f)
+      || (c.email || '').toLowerCase().includes(f)
+      || (c.phone || '').includes(f));
+    $('contacts-empty').style.display = list.length ? 'none' : '';
+    for (const c of list) {
+      const row = document.createElement('button');
+      row.className = 'contact-row';
+      row.appendChild(avatarNode({ id: c.contactId, hasAvatar: c.hasAvatar, avatarVer: c.avatarVer, name: c.name, online: c.online }));
+      const main = document.createElement('div'); main.className = 'row-main';
+      const nm = document.createElement('div'); nm.className = 'row-name'; nm.textContent = c.name;
+      const sub = document.createElement('div'); sub.className = 'row-sub' + (c.online ? ' on' : '');
+      sub.textContent = presenceText(c) + (c.phone ? ' • ' + c.phone : '');
+      main.appendChild(nm); main.appendChild(sub);
+      row.appendChild(main);
+      row.onclick = () => openDM(c);
+      box.appendChild(row);
+    }
+  }
+  // Tail-fetch each conversation (ciphertext), decrypt locally, cache the
+  // preview + unread count for the chats list.
+  let previewBusy = false;
+  async function refreshPreviews() {
+    if (previewBusy || !authToken) return;
+    previewBusy = true;
+    try {
+      for (const r of myRooms) {
+        try {
+          const since = lastRead[r.code] || 0;
+          const res = await fetch('/api/rooms/' + r.code + '/last?since=' + since + '&me=' + encodeURIComponent(myUserId),
+            { headers: authHeaders() });
+          const j = await res.json().catch(() => null);
+          if (!j || !j.ok) continue;
+          if (!j.msg) { convMeta.set(r.code, { ts: 0, preview: '', unread: 0 }); continue; }
+          const key = await keyFor(r.code);
+          let preview;
+          const m = j.msg;
+          if (m.deleted) preview = '🗑 deleted message';
+          else if (m.kind === 'text') {
+            try { preview = await decTextK(key, m.payload); } catch { preview = '🔒 message'; }
+          } else preview = kindLabel(m.kind);
+          if (m.from === myUserId && !m.deleted) preview = 'Tum: ' + preview;
+          convMeta.set(r.code, { ts: m.ts, preview: String(preview).slice(0, 80), unread: j.unread || 0 });
+        } catch {}
+      }
+      renderChatsList();
+    } finally { previewBusy = false; }
+  }
+  /* ----- opening conversations ----- */
+  function openRoomByCode(code) {
+    $('code-input').value = code;
+    $('join-btn').click();
+  }
+  function openDM(contact) {
+    if (!contact) return;
+    const entry = myRooms.find((r) => r.dmRoomId === contact.dmRoomId)
+      || myRooms.find((r) => r.dm === contact.contactId);
+    if (!entry) {
+      alert('Is chat ka code is device par nahi mila — jis device par accept kiya tha, wahan se kholo');
+      return;
+    }
+    myName = myName || (account && account.name) || 'Guest';
+    send({ type: 'create-room-with-code', roomCode: entry.code, userId: myUserId, name: myName, avatar: myAvatar });
+  }
+  function renderDmPresence() {
+    const el = $('dm-presence');
+    if (!el) return;
+    const c = contacts.find((x) => x.contactId === currentContactId);
+    if (!c) { el.textContent = ''; return; }
+    el.textContent = c.online ? 'online' : (c.lastSeen ? 'last seen ' + lastSeenText(c.lastSeen) : 'offline');
+    el.classList.toggle('on', !!c.online);
+  }
+  /* ----- contact requests ----- */
+  async function acceptRequest(r) {
+    if (!myKeys) {
+      alert('DM kholne ke liye pehle is device par password se login karo — private key wahan mehfooz hai 🔑');
+      return;
+    }
+    try {
+      const code = await rsaDecrypt(r.envelope);
+      if (!/^[A-Z0-9]{6}$/.test(code)) throw new Error('bad code');
+      const dmRoomId = await sha256hex(code);
+      const res = await fetch('/api/contacts/respond', {
+        method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ requestId: r.id, accept: true, dmRoomId }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) { alert(j.error || 'Accept nahi ho saka'); return; }
+      addRoom(code, r.fromName, r.fromId, dmRoomId);
+      refreshContacts();
+    } catch { alert('Request khul nahi saka — key ka masla hai'); }
+  }
+  async function declineRequest(id) {
+    try {
+      await fetch('/api/contacts/respond', {
+        method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ requestId: id, accept: false }),
+      });
+    } catch {}
+    refreshContacts();
+  }
+  async function sendContactRequest(u, btn) {
+    if (!u.pubKey) { alert('Is user ne abhi DM keys nahi banayi — pehle unhe app mein login karna hoga'); return; }
+    btn.disabled = true;
+    try {
+      const code = makeRoomCode();
+      const envelope = await rsaEncryptTo(u.pubKey, code);
+      const dmRoomId = await sha256hex(code);
+      const r = await fetch('/api/contacts/request', {
+        method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ toId: u.id, envelope }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) { alert(j.error || 'Request nahi gaya'); btn.disabled = false; return; }
+      pendingDMs[dmRoomId] = { code, toId: u.id, name: u.name };
+      vaultExtras.pendingDMs = pendingDMs;
+      vaultSave();
+      btn.textContent = '✓ Request bheja';
+      refreshContacts();
+    } catch { alert('Request bhejne mein masla hua'); btn.disabled = false; }
+  }
+  async function doUserSearch() {
+    const q = $('user-search-input').value.trim();
+    const box = $('user-search-results');
+    box.innerHTML = '';
+    if (q.length < 2) { box.innerHTML = '<div class="dash-empty">Kam se kam 2 characters likho</div>'; return; }
+    try {
+      const r = await fetch('/api/users/search?q=' + encodeURIComponent(q), { headers: authHeaders() });
+      const j = await r.json().catch(() => ({}));
+      const users = (j && j.users) || [];
+      if (!users.length) { box.innerHTML = '<div class="dash-empty">Koi user nahi mila</div>'; return; }
+      for (const u of users) {
+        const row = document.createElement('div'); row.className = 'user-row';
+        row.appendChild(avatarNode({ id: u.id, hasAvatar: u.hasAvatar, avatarVer: u.avatarVer, name: u.name }));
+        const main = document.createElement('div'); main.className = 'row-main';
+        const nm = document.createElement('div'); nm.className = 'row-name'; nm.textContent = u.name;
+        const sub = document.createElement('div'); sub.className = 'row-sub';
+        sub.textContent = u.email + (u.phone ? ' • ' + u.phone : '');
+        main.appendChild(nm); main.appendChild(sub);
+        row.appendChild(main);
+        const b = document.createElement('button'); b.className = 'icon-btn';
+        if (u.isContact) { b.textContent = '✓ Contact'; b.disabled = true; }
+        else if (u.requestPending) { b.textContent = '⏳ Pending'; b.disabled = true; }
+        else { b.textContent = '➕ Add'; b.onclick = () => sendContactRequest(u, b); }
+        row.appendChild(b);
+        box.appendChild(row);
+      }
+    } catch { box.innerHTML = '<div class="dash-empty">Search nahi ho saka</div>'; }
+  }
+  /* ----- meri profile: name + phone + real photo ----- */
+  let pendingAvatarData = null;
+  function processProfilePhoto(file) {
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const s = Math.min(img.width, img.height);
+          const cv = document.createElement('canvas');
+          cv.width = 256; cv.height = 256;
+          cv.getContext('2d').drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, 256, 256);
+          URL.revokeObjectURL(url);
+          resolve(cv.toDataURL('image/jpeg', 0.85));
+        } catch (e) { reject(e); }
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('img load fail')); };
+      img.src = url;
+    });
+  }
+  async function saveProfile() {
+    const name = $('profile-name').value.trim();
+    const phone = $('profile-phone').value.trim();
+    const msgEl = $('profile-msg');
+    msgEl.textContent = '';
+    try {
+      const r = await fetch('/api/auth/profile', {
+        method: 'PUT', headers: authHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ name, phone }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) { msgEl.style.color = '#ff7b7b'; msgEl.textContent = j.error || 'Save nahi ho saka'; return; }
+      account = j.account;
+      if (pendingAvatarData) {
+        const r2 = await fetch('/api/auth/avatar', {
+          method: 'PUT', headers: authHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ data: pendingAvatarData }),
+        });
+        const j2 = await r2.json().catch(() => ({}));
+        if (!r2.ok) { msgEl.style.color = '#ff7b7b'; msgEl.textContent = j2.error || 'Photo save nahi ho saka'; return; }
+        account.hasAvatar = true;
+        account.avatarVer = j2.avatarVer;
+        pendingAvatarData = null;
+      }
+      msgEl.style.color = '#4ade80';
+      msgEl.textContent = '✅ Profile save ho gaya';
+      renderDashHead();
+    } catch { msgEl.style.color = '#ff7b7b'; msgEl.textContent = 'Server se rabta nahi ho raha'; }
+  }
+
   /* ================= UI wiring ================= */
   function wireUI() {
     $('create-btn').onclick = () => {
@@ -1900,7 +2579,9 @@
       if (liveLoc) stopLiveLocation();
       if (group) endGroupCall(); else endCall();
       sendTyping(false);
-      if (leavingCode) removeRoom(leavingCode);
+      const leavingEntry = myRooms.find((r) => r.code === leavingCode);
+      if (leavingCode && !(leavingEntry && leavingEntry.dm)) removeRoom(leavingCode);
+      currentContactId = null;
       send({ type: 'leave' });
     };
 
@@ -1908,6 +2589,48 @@
       if (document.visibilityState === 'visible') sendRead();
     });
     window.addEventListener('beforeunload', () => sendTyping(false));
+
+    /* ----- v3 wiring: dashboard / fab / panels / profile / contacts ----- */
+    $('fab-btn').onclick = (e) => { e.stopPropagation(); $('fab-menu').classList.toggle('show'); };
+    document.addEventListener('click', (e) => { if (!$('fab-menu').contains(e.target)) $('fab-menu').classList.remove('show'); });
+    const openPanel = (id) => { $('fab-menu').classList.remove('show'); $(id).classList.add('show'); };
+    $('fab-room').onclick = () => openPanel('room-panel');
+    $('fab-join').onclick = () => { openPanel('room-panel'); setTimeout(() => $('code-input').focus(), 60); };
+    $('fab-add').onclick = () => openPanel('add-panel');
+    $('room-panel-close').onclick = () => $('room-panel').classList.remove('show');
+    $('add-panel-close').onclick = () => $('add-panel').classList.remove('show');
+    $('profile-close').onclick = () => $('profile-panel').classList.remove('show');
+    $('dash-me').onclick = () => { renderDashHead(); $('profile-panel').classList.add('show'); };
+    $('dash-lock-btn').onclick = () => {
+      if (!localStorage.getItem(PIN_KEY)) { renderDashHead(); $('profile-panel').classList.add('show'); return; }
+      pinFails = 0;
+      showLock();
+    };
+    $('create-btn').addEventListener('click', () => $('room-panel').classList.remove('show'));
+    $('join-btn').addEventListener('click', () => $('room-panel').classList.remove('show'));
+    $('dash-search').addEventListener('input', (e) => {
+      dashFilter = e.target.value.trim().toLowerCase();
+      renderChatsList(); renderContactsList();
+    });
+    $('user-search-btn').onclick = doUserSearch;
+    $('user-search-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') doUserSearch(); });
+    $('photo-btn').onclick = () => $('profile-photo-input').click();
+    $('profile-photo-input').onchange = async (e) => {
+      const f = e.target.files[0];
+      e.target.value = '';
+      if (!f) return;
+      try {
+        pendingAvatarData = await processProfilePhoto(f);
+        const pa = $('profile-avatar');
+        pa.innerHTML = '';
+        const img = document.createElement('img');
+        img.src = pendingAvatarData;
+        pa.appendChild(img);
+        $('profile-msg').style.color = '#9aa6bd';
+        $('profile-msg').textContent = 'Photo tayar hai — "Save karo" dabao';
+      } catch { alert('Photo khul nahi saka'); }
+    };
+    $('profile-save').onclick = saveProfile;
   }
 
   /* ================= boot (auth first, then PIN gate, then app) ================= */

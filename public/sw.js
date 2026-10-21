@@ -1,5 +1,5 @@
 // Dosti Chat — service worker: push notifications + offline cache (PWA).
-const CACHE = 'dosti-v2';
+const CACHE = 'dosti-v3';
 const CORE = ['/', '/index.html', '/manifest.json', '/icon-192.png', '/icon-512.png', '/lock.js'];
 
 self.addEventListener('install', (e) => {
@@ -21,6 +21,7 @@ self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
   const url = new URL(e.request.url);
   if (url.pathname.startsWith('/ws') || url.pathname.startsWith('/uploads')) return; // never cache live data
+  if (url.pathname.startsWith('/api/')) return; // API data (incl. avatars) is always network-fresh
   e.respondWith(
     caches.match(e.request).then(
       (hit) =>
