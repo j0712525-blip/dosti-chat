@@ -431,6 +431,184 @@ async function encText(key, t) {
   check('vault: DB stores ciphertext only',
     !!vrow && vrow.blob === vaultBlob && !vrow.blob.includes('MARKRM') && !vrow.blob.includes('gizli'));
 
+  // ================= v3: accounts, contacts, DMs, presence, avatars =================
+  const API = `http://localhost:${PORT}`;
+  async function jfetch(method, p, token, body) {
+    const r = await fetch(API + p, {
+      method,
+      headers: { ...(token ? { Authorization: 'Bearer ' + token } : {}), 'Content-Type': 'application/json' },
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+    let j = null;
+    try { j = await r.json(); } catch {}
+    return { status: r.status, headers: r.headers, j };
+  }
+  async function nextType(client, type, timeout = 8000) {
+    const t0 = Date.now();
+    for (;;) {
+      const m = await client.next(Math.max(1, timeout - (Date.now() - t0)));
+      if (m.type === type) return m;
+    }
+  }
+
+  // second + third accounts (C registers WITH the optional phone)
+  const AID = regJ.account.id;
+  const regB = await jfetch('POST', '/api/auth/register', null, { name: 'Bestie Two', email: 'bestie2@example.com', password: 'secret2' });
+  check('v3: register B ok', regB.status === 200 && regB.j.account && typeof regB.j.account.id === 'number');
+  const TOKEN_B = regB.j.token, BID = regB.j.account.id;
+  const regC = await jfetch('POST', '/api/auth/register', null, { name: 'Third Person', email: 'third@example.com', password: 'secret3', phone: '+1 (555) 010-2030' });
+  const TOKEN_C = regC.j.token, CID = regC.j.account.id;
+  check('v3: register with optional phone (normalized)',
+    regC.status === 200 && regC.j.account.phone === '+15550102030');
+
+  // ---- pubkey set/get (RSA-OAEP, like the browser's WebCrypto pair) ----
+  const { publicKey: pubB, privateKey: privB } = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
+  const pubJwkB = pubB.export({ format: 'jwk' });
+  check('v3: pubkey PUT requires auth', (await jfetch('PUT', '/api/auth/pubkey', null, { pubKey: pubJwkB })).status === 401);
+  check('v3: pubkey PUT ok', (await jfetch('PUT', '/api/auth/pubkey', TOKEN_B, { pubKey: pubJwkB })).status === 200);
+  const pkGet = await jfetch('GET', `/api/users/${BID}/pubkey`, TOKEN);
+  check('v3: pubkey GET round-trip',
+    pkGet.status === 200 && pkGet.j.pubKey && pkGet.j.pubKey.kty === 'RSA' && pkGet.j.pubKey.n === pubJwkB.n);
+  const meB = await jfetch('GET', '/api/auth/me', TOKEN_B);
+  check('v3: /me reports hasPubKey + pubKey',
+    meB.j.account.hasPubKey === true && meB.j.pubKey && meB.j.pubKey.n === pubJwkB.n);
+
+  // ---- profile: phone set later via profile update ----
+  check('v3: invalid phone rejected', (await jfetch('PUT', '/api/auth/profile', TOKEN_B, { phone: 'abc' })).status === 400);
+  const profB = await jfetch('PUT', '/api/auth/profile', TOKEN_B, { name: 'Bestie Two', phone: '+92 300-1234567' });
+  check('v3: profile update sets phone (normalized)',
+    profB.status === 200 && profB.j.account.phone === '+923001234567');
+
+  // ---- user search: name / email / phone / not-found / auth / no self ----
+  const sNameHit = ((await jfetch('GET', '/api/users/search?q=' + encodeURIComponent('Bestie'), TOKEN)).j.users || [])
+    .find((u) => u.id === BID);
+  check('v3: search by name finds user (+phone shown)', !!sNameHit && sNameHit.phone === '+923001234567');
+  check('v3: search by email finds user',
+    ((await jfetch('GET', '/api/users/search?q=' + encodeURIComponent('third@example'), TOKEN)).j.users || [])
+      .some((u) => u.id === CID));
+  check('v3: search by phone digits finds user',
+    ((await jfetch('GET', '/api/users/search?q=' + encodeURIComponent('3001234'), TOKEN)).j.users || [])
+      .some((u) => u.id === BID));
+  const sNone = await jfetch('GET', '/api/users/search?q=' + encodeURIComponent('zzzznope'), TOKEN);
+  check('v3: search not found → empty list', sNone.status === 200 && Array.isArray(sNone.j.users) && sNone.j.users.length === 0);
+  check('v3: search requires auth', (await jfetch('GET', '/api/users/search?q=Bestie', null)).status === 401);
+  check('v3: search excludes self',
+    !((await jfetch('GET', '/api/users/search?q=' + encodeURIComponent('Tester'), TOKEN)).j.users || [])
+      .some((u) => u.id === AID));
+
+  // ---- profile photo (PP): set → GET bytes/type; oversize rejected ----
+  const jpgBytes = Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0]), Buffer.alloc(64, 7), Buffer.from([0xff, 0xd9])]);
+  const avPut = await jfetch('PUT', '/api/auth/avatar', TOKEN_B, { data: jpgBytes.toString('base64') });
+  check('v3: avatar PUT ok, avatarVer=1', avPut.status === 200 && avPut.j.avatarVer === 1 && avPut.j.hasAvatar === true);
+  const avGet = await fetch(`${API}/api/users/${BID}/avatar`, { headers: { Authorization: 'Bearer ' + TOKEN } });
+  const avBytes = Buffer.from(await avGet.arrayBuffer());
+  check('v3: avatar GET returns same bytes + image content type',
+    avGet.status === 200 && avBytes.equals(jpgBytes) && (avGet.headers.get('content-type') || '').includes('image/jpeg'));
+  check('v3: avatar GET requires auth', (await fetch(`${API}/api/users/${BID}/avatar`)).status === 401);
+  check('v3: oversize avatar rejected',
+    (await jfetch('PUT', '/api/auth/avatar', TOKEN_B, { data: Buffer.alloc(301 * 1024, 1).toString('base64') })).status === 400);
+  const sAvHit = ((await jfetch('GET', '/api/users/search?q=' + encodeURIComponent('Bestie'), TOKEN)).j.users || [])
+    .find((u) => u.id === BID);
+  check('v3: search payload shows hasAvatar + avatarVer + phone',
+    !!sAvHit && sAvHit.hasAvatar === true && sAvHit.avatarVer === 1 && sAvHit.phone === '+923001234567');
+
+  // ---- contact request → accept (real RSA envelope, browser-equivalent) ----
+  check('v3: self-add rejected',
+    (await jfetch('POST', '/api/contacts/request', TOKEN, { toId: AID, envelope: 'x'.repeat(40) })).status === 400);
+  const dmCode = 'DMV3X9';
+  const envelope = crypto.publicEncrypt(
+    { key: pubB, padding: crypto.constants.RSA_PKCS1_OAEP_PADDING, oaepHash: 'sha256' },
+    Buffer.from(dmCode, 'utf8')).toString('base64');
+  const reqAB = await jfetch('POST', '/api/contacts/request', TOKEN, { toId: BID, envelope });
+  check('v3: contact request created', reqAB.status === 200 && typeof reqAB.j.requestId === 'number');
+  check('v3: duplicate pending request rejected',
+    (await jfetch('POST', '/api/contacts/request', TOKEN, { toId: BID, envelope })).status === 409);
+  const inHit = ((await jfetch('GET', '/api/contacts/requests', TOKEN_B)).j.incoming || [])
+    .find((r) => r.id === reqAB.j.requestId);
+  check('v3: recipient sees incoming request + envelope', !!inHit && inHit.envelope === envelope && inHit.fromId === AID);
+  const decCode = crypto.privateDecrypt(
+    { key: privB, padding: crypto.constants.RSA_PKCS1_OAEP_PADDING, oaepHash: 'sha256' },
+    Buffer.from(inHit.envelope, 'base64')).toString('utf8');
+  check('v3: envelope decrypts to the DM code', decCode === dmCode);
+  const dmRoomId = crypto.createHash('sha256').update(decCode).digest('hex');
+  check('v3: non-recipient cannot respond',
+    (await jfetch('POST', '/api/contacts/respond', TOKEN, { requestId: reqAB.j.requestId, accept: true, dmRoomId })).status === 403);
+  check('v3: accept ok',
+    (await jfetch('POST', '/api/contacts/respond', TOKEN_B, { requestId: reqAB.j.requestId, accept: true, dmRoomId })).status === 200);
+  const crows = db.prepare('SELECT owner_id, contact_id, dm_room_id FROM contacts').all();
+  check('v3: accept creates BOTH contact rows with the dmRoomId',
+    crows.length === 2
+    && crows.some((r) => r.owner_id === AID && r.contact_id === BID && r.dm_room_id === dmRoomId)
+    && crows.some((r) => r.owner_id === BID && r.contact_id === AID && r.dm_room_id === dmRoomId));
+  const cAHit = ((await jfetch('GET', '/api/contacts', TOKEN)).j.contacts || []).find((c) => c.contactId === BID);
+  check('v3: contacts list (A) has B with dmRoomId + phone + hasAvatar + online flag',
+    !!cAHit && cAHit.dmRoomId === dmRoomId && cAHit.phone === '+923001234567'
+    && cAHit.hasAvatar === true && typeof cAHit.online === 'boolean');
+  check('v3: contacts list (B) has A',
+    ((await jfetch('GET', '/api/contacts', TOKEN_B)).j.contacts || [])
+      .some((c) => c.contactId === AID && c.dmRoomId === dmRoomId));
+  check('v3: request to an existing contact rejected',
+    (await jfetch('POST', '/api/contacts/request', TOKEN, { toId: BID, envelope })).status === 409);
+
+  // ---- decline path: A → C, C declines ----
+  const reqAC = await jfetch('POST', '/api/contacts/request', TOKEN, { toId: CID, envelope: 'y'.repeat(40) });
+  check('v3: request to C created', reqAC.status === 200);
+  check('v3: decline ok',
+    (await jfetch('POST', '/api/contacts/respond', TOKEN_C, { requestId: reqAC.j.requestId, accept: false })).status === 200);
+  check('v3: declined → no contact row',
+    !((await jfetch('GET', '/api/contacts', TOKEN)).j.contacts || []).some((c) => c.contactId === CID));
+  check('v3: declined request leaves the pending list',
+    ((await jfetch('GET', '/api/contacts/requests', TOKEN_C)).j.incoming || []).length === 0);
+
+  // ---- end-to-end DM: B opens the room with the decrypted code, A joins ----
+  const dmKey = await roomKey(dmCode);
+  const dB = await connect(TOKEN_B);
+  dB.send({ type: 'create-room-with-code', roomCode: dmCode, userId: 'uDmB', name: 'Bestie Two', avatar: '🥀' });
+  const dBj = await nextType(dB, 'joined');
+  check('v3: DM room created on demand via code',
+    dBj.roomCode === dmCode && Array.isArray(dBj.history) && dBj.history.length === 0);
+  const dA = await connect(TOKEN);
+  dA.send({ type: 'join', roomCode: dmCode, userId: 'uDmA', name: 'Ali', avatar: '😎' });
+  const dAj = await nextType(dA, 'joined');
+  check('v3: requester joins the DM room', dAj.type === 'joined' && dAj.peers.some((p) => p.id === 'uDmB'));
+  const dmCt1 = await encText(dmKey, 'salam bestie — personal chat');
+  dA.send({ type: 'chat', kind: 'text', payload: dmCt1, cid: 'dm1' });
+  const dmMsg1 = await nextType(dB, 'chat');
+  check('v3: DM message A→B (ciphertext relay)', dmMsg1.payload === dmCt1 && dmMsg1.from === 'uDmA');
+  await nextType(dA, 'chat'); // A's own echo
+  const dmCt2 = await encText(dmKey, 'walaikum salam!');
+  dB.send({ type: 'chat', kind: 'text', payload: dmCt2, cid: 'dm2' });
+  const dmMsg2 = await nextType(dA, 'chat');
+  check('v3: DM message B→A', dmMsg2.payload === dmCt2 && dmMsg2.from === 'uDmB');
+  await nextType(dB, 'chat'); // B's own echo
+  const lastDm = await jfetch('GET', `/api/rooms/${dmCode}/last?since=0&me=uDmA`, TOKEN);
+  check('v3: /last returns DM tail + unread count',
+    lastDm.status === 200 && !!lastDm.j.msg && lastDm.j.msg.payload === dmCt2 && lastDm.j.unread === 1);
+  check('v3: /last requires auth', (await jfetch('GET', `/api/rooms/${dmCode}/last`, null)).status === 401);
+  dA.close(); dB.close();
+
+  // ---- presence: online flip on connect, push to contact, lastSeen ----
+  // dB's close above is async — wait until the server has fully registered
+  // B as offline, otherwise B's socket count never transitions 0→1 below.
+  for (let i = 0; i < 50; i++) {
+    const cc = ((await jfetch('GET', '/api/contacts', TOKEN)).j.contacts || []).find((c) => c.contactId === BID);
+    if (cc && cc.online === false) break;
+    await new Promise((r) => setTimeout(r, 100));
+  }
+  const aP = await connect(TOKEN);
+  const bP = await connect(TOKEN_B);
+  const presOn = await nextType(aP, 'presence');
+  check('v3: presence push — contact came online', presOn.contactId === BID && presOn.online === true);
+  const cOn = ((await jfetch('GET', '/api/contacts', TOKEN)).j.contacts || []).find((c) => c.contactId === BID);
+  check('v3: contacts list shows online=true', !!cOn && cOn.online === true);
+  bP.close();
+  const presOff = await nextType(aP, 'presence');
+  check('v3: presence push — contact went offline with lastSeen',
+    presOff.contactId === BID && presOff.online === false && presOff.lastSeen > 0);
+  const cOff = ((await jfetch('GET', '/api/contacts', TOKEN)).j.contacts || []).find((c) => c.contactId === BID);
+  check('v3: contacts list shows online=false + lastSeen', !!cOff && cOff.online === false && cOff.lastSeen > 0);
+  aP.close();
+
   // ---- static assets ----
   const pg = await httpGet('/');
   check('client page served', pg.status === 200 && pg.body.toString().includes('Dosti Chat'));

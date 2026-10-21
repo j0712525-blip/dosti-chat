@@ -87,7 +87,33 @@ CREATE TABLE IF NOT EXISTS vaults(
   blob TEXT NOT NULL,
   updatedAt INTEGER NOT NULL DEFAULT 0
 );
+CREATE TABLE IF NOT EXISTS contacts(
+  owner_id INTEGER NOT NULL,
+  contact_id INTEGER NOT NULL,
+  dm_room_id TEXT NOT NULL,
+  createdAt INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY(owner_id, contact_id)
+);
+CREATE TABLE IF NOT EXISTS contact_requests(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  from_id INTEGER NOT NULL,
+  to_id INTEGER NOT NULL,
+  envelope TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  createdAt INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_creq_to ON contact_requests(to_id, status);
+CREATE INDEX IF NOT EXISTS idx_creq_from ON contact_requests(from_id, status);
 `);
+// v3 account columns (phone / DM public key / profile photo / last seen).
+for (const sql of [
+  `ALTER TABLE accounts ADD COLUMN phone TEXT`,
+  `ALTER TABLE accounts ADD COLUMN pubKey TEXT`,
+  `ALTER TABLE accounts ADD COLUMN avatar BLOB`,
+  `ALTER TABLE accounts ADD COLUMN avatarMime TEXT`,
+  `ALTER TABLE accounts ADD COLUMN avatarVer INTEGER NOT NULL DEFAULT 0`,
+  `ALTER TABLE accounts ADD COLUMN lastSeen INTEGER NOT NULL DEFAULT 0`,
+]) { try { db.exec(sql); } catch { /* column already there */ } }
 // Migration for DBs created before disappearing messages existed.
 try { db.exec(`ALTER TABLE messages ADD COLUMN expiresAt INTEGER`); } catch { /* column already there */ }
 
@@ -131,13 +157,54 @@ const qExpired      = db.prepare(`SELECT id, room FROM messages WHERE expiresAt 
 const qHardDelete   = db.prepare(`DELETE FROM messages WHERE id=?`);
 // --- v2: accounts / sessions / vault ---
 const qAccountByEmail = db.prepare(`SELECT id, email, name, passHash, salt FROM accounts WHERE email=?`);
-const qAddAccount     = db.prepare(`INSERT INTO accounts(email,name,passHash,salt,createdAt) VALUES(?,?,?,?,?)`);
+const qAddAccount     = db.prepare(`INSERT INTO accounts(email,name,passHash,salt,createdAt,phone) VALUES(?,?,?,?,?,?)`);
 const qAddSession     = db.prepare(`INSERT INTO sessions(tokenHash,accountId,expiresAt,createdAt) VALUES(?,?,?,?)`);
-const qGetSession     = db.prepare(`SELECT s.accountId, s.expiresAt, a.email, a.name FROM sessions s JOIN accounts a ON a.id = s.accountId WHERE s.tokenHash=?`);
+const qGetSession     = db.prepare(`SELECT s.accountId, s.expiresAt, a.email, a.name, a.phone, a.avatarVer,
+  (a.avatar IS NOT NULL) AS hasAvatar, (a.pubKey IS NOT NULL) AS hasPubKey
+  FROM sessions s JOIN accounts a ON a.id = s.accountId WHERE s.tokenHash=?`);
 const qDelSession     = db.prepare(`DELETE FROM sessions WHERE tokenHash=?`);
 const qGetVault       = db.prepare(`SELECT blob FROM vaults WHERE accountId=?`);
 const qPutVault       = db.prepare(`INSERT INTO vaults(accountId,blob,updatedAt) VALUES(?,?,?)
   ON CONFLICT(accountId) DO UPDATE SET blob=excluded.blob, updatedAt=excluded.updatedAt`);
+// --- v3: contacts / requests / presence / profile ---
+const qAccountById    = db.prepare(`SELECT id, email, name, phone, pubKey, avatarMime, avatarVer, lastSeen,
+  (avatar IS NOT NULL) AS hasAvatar, (pubKey IS NOT NULL) AS hasPubKey FROM accounts WHERE id=?`);
+const qSetPubKey      = db.prepare(`UPDATE accounts SET pubKey=? WHERE id=?`);
+const qSetProfile     = db.prepare(`UPDATE accounts SET name=?, phone=? WHERE id=?`);
+const qSetAvatar      = db.prepare(`UPDATE accounts SET avatar=?, avatarMime=?, avatarVer=avatarVer+1 WHERE id=?`);
+const qGetAvatar      = db.prepare(`SELECT avatar, avatarMime FROM accounts WHERE id=?`);
+const qTouchAccount   = db.prepare(`UPDATE accounts SET lastSeen=? WHERE id=?`);
+const qSearchUsers    = db.prepare(`SELECT id, email, name, phone, pubKey, avatarVer,
+  (avatar IS NOT NULL) AS hasAvatar FROM accounts
+  WHERE id != ? AND (LOWER(name) LIKE ? OR LOWER(email) LIKE ?) ORDER BY name LIMIT 20`);
+const qPhoneUsers     = db.prepare(`SELECT id, email, name, phone, pubKey, avatarVer,
+  (avatar IS NOT NULL) AS hasAvatar FROM accounts WHERE id != ? AND phone IS NOT NULL ORDER BY name LIMIT 100`);
+const qAddContact     = db.prepare(`INSERT OR IGNORE INTO contacts(owner_id, contact_id, dm_room_id, createdAt) VALUES(?,?,?,?)`);
+const qMyContacts     = db.prepare(`SELECT c.contact_id AS contactId, c.dm_room_id AS dmRoomId,
+  a.name, a.email, a.phone, a.avatarVer, a.lastSeen, (a.avatar IS NOT NULL) AS hasAvatar
+  FROM contacts c JOIN accounts a ON a.id = c.contact_id WHERE c.owner_id=? ORDER BY a.name`);
+const qIsContact      = db.prepare(`SELECT 1 AS x FROM contacts WHERE owner_id=? AND contact_id=?`);
+const qContactOwners  = db.prepare(`SELECT owner_id FROM contacts WHERE contact_id=?`);
+const qAddRequest     = db.prepare(`INSERT INTO contact_requests(from_id,to_id,envelope,status,createdAt) VALUES(?,?,?,'pending',?)`);
+const qPendingBetween = db.prepare(`SELECT id FROM contact_requests WHERE status='pending'
+  AND ((from_id=? AND to_id=?) OR (from_id=? AND to_id=?))`);
+const qIncomingReqs   = db.prepare(`SELECT r.id, r.from_id AS fromId, r.envelope, r.createdAt,
+  a.name AS fromName, a.email AS fromEmail, a.phone AS fromPhone, a.avatarVer AS fromAvatarVer,
+  (a.avatar IS NOT NULL) AS fromHasAvatar
+  FROM contact_requests r JOIN accounts a ON a.id = r.from_id
+  WHERE r.to_id=? AND r.status='pending' ORDER BY r.createdAt`);
+const qOutgoingReqs   = db.prepare(`SELECT r.id, r.to_id AS toId, r.createdAt, a.name AS toName
+  FROM contact_requests r JOIN accounts a ON a.id = r.to_id
+  WHERE r.from_id=? AND r.status='pending' ORDER BY r.createdAt`);
+const qGetRequest     = db.prepare(`SELECT id, from_id, to_id, status FROM contact_requests WHERE id=?`);
+const qSetReqStatus   = db.prepare(`UPDATE contact_requests SET status=? WHERE id=?`);
+const qLastMsg        = db.prepare(`
+  SELECT m.id, m.room, m.userId, m.name, COALESCE(u.avatar,'🙂') AS avatar,
+         m.kind, m.payload, m.replyTo, m.ts, m.edited, m.deleted, m.expiresAt
+  FROM messages m LEFT JOIN users u ON u.userId = m.userId
+  WHERE m.room = ? AND (m.expiresAt IS NULL OR m.expiresAt > ?) ORDER BY m.id DESC LIMIT 1`);
+const qCountAfter     = db.prepare(`SELECT COUNT(*) AS n FROM messages
+  WHERE room=? AND ts > ? AND userId != ? AND (expiresAt IS NULL OR expiresAt > ?)`);
 
 // ------------------------------------------------------------- VAPID ---
 // Generated once into .vapid.json (mode 600). Keys are NEVER logged.
@@ -184,7 +251,18 @@ function accountForToken(token) {
   const s = qGetSession.get(tokenHash(token));
   if (!s) return null;
   if (s.expiresAt <= Date.now()) { qDelSession.run(tokenHash(token)); return null; }
-  return { id: s.accountId, email: s.email, name: s.name };
+  return {
+    id: s.accountId, email: s.email, name: s.name, phone: s.phone || null,
+    hasAvatar: !!s.hasAvatar, avatarVer: s.avatarVer || 0, hasPubKey: !!s.hasPubKey,
+  };
+}
+// Public account shape for API responses (never hashes / private material).
+function publicAccount(a) {
+  if (!a) return null;
+  return {
+    id: a.id, email: a.email, name: a.name, phone: a.phone || null,
+    hasAvatar: !!a.hasAvatar, avatarVer: a.avatarVer || 0, hasPubKey: !!a.hasPubKey,
+  };
 }
 function bearer(req) {
   const h = String(req.headers.authorization || '');
@@ -200,6 +278,16 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 function cleanEmail(e) {
   const s = String(e || '').trim().toLowerCase().slice(0, 120);
   return EMAIL_RE.test(s) ? s : null;
+}
+// Phone is OPTIONAL account metadata (never a login credential).
+// Returns: undefined = field not provided, null = clear it, false = invalid,
+// otherwise the normalized number (spaces/dashes/parens stripped, leading + kept).
+function cleanPhone(p) {
+  if (p === undefined || p === null) return undefined;
+  const s = String(p).trim();
+  if (!s) return null;
+  const norm = s.replace(/[\s\-()]/g, '');
+  return /^\+?\d{7,15}$/.test(norm) ? norm : false;
 }
 
 // ------------------------------------------------------------ uploads --
@@ -231,13 +319,15 @@ app.post('/api/auth/register', async (req, res) => {
     const email = cleanEmail(req.body && req.body.email);
     const name = cleanName(req.body && req.body.name);
     const password = String((req.body && req.body.password) || '');
+    const phone = cleanPhone(req.body && req.body.phone);
     if (!email) return res.status(400).json({ error: 'Email sahi likho' });
     if (!name || name === 'Guest') return res.status(400).json({ error: 'Apna naam likho' });
     if (password.length < 6) return res.status(400).json({ error: 'Password kam se kam 6 characters ka ho' });
+    if (phone === false) return res.status(400).json({ error: 'Phone number sahi likho' });
     if (qAccountByEmail.get(email)) return res.status(409).json({ error: 'Is email se account pehle se hai — login karo' });
     const { salt, hash } = await hashPassword(password);
-    const info = qAddAccount.run(email, name, hash, salt, Date.now());
-    const account = { id: Number(info.lastInsertRowid), email, name };
+    const info = qAddAccount.run(email, name, hash, salt, Date.now(), phone || null);
+    const account = publicAccount(qAccountById.get(Number(info.lastInsertRowid)));
     res.json({ ok: true, token: makeSession(account.id), account });
   } catch (e) { res.status(500).json({ error: 'Server masla: ' + e.message }); }
 });
@@ -250,7 +340,7 @@ app.post('/api/auth/login', async (req, res) => {
     if (!acc || !(await verifyPassword(password, acc.salt, acc.passHash))) {
       return res.status(401).json({ error: 'Email ya password galat hai' });
     }
-    const account = { id: acc.id, email: acc.email, name: acc.name };
+    const account = publicAccount(qAccountById.get(acc.id));
     res.json({ ok: true, token: makeSession(acc.id), account });
   } catch (e) { res.status(500).json({ error: 'Server masla: ' + e.message }); }
 });
@@ -264,7 +354,10 @@ app.post('/api/auth/logout', (req, res) => {
 app.get('/api/auth/me', (req, res) => {
   const acc = accountForToken(bearer(req));
   if (!acc) return res.status(401).json({ error: 'Pehle login karo' });
-  res.json({ ok: true, account: acc });
+  const row = qAccountById.get(acc.id);
+  let pubKey = null;
+  try { pubKey = row && row.pubKey ? JSON.parse(row.pubKey) : null; } catch { pubKey = null; }
+  res.json({ ok: true, account: publicAccount(row), pubKey });
 });
 
 // Encrypted room vault — server stores ONLY opaque ciphertext.
@@ -279,6 +372,192 @@ app.put('/api/vault', requireAuth, (req, res) => {
   }
   qPutVault.run(req.account.id, blob, Date.now());
   res.json({ ok: true });
+});
+
+// ------------------------------------------------- v3: profile / keys --
+app.put('/api/auth/profile', requireAuth, (req, res) => {
+  const row = qAccountById.get(req.account.id);
+  if (!row) return res.status(404).json({ error: 'Account nahi mila' });
+  let name = row.name;
+  if (req.body && 'name' in req.body) {
+    name = cleanName(req.body.name);
+    if (!name || name === 'Guest') return res.status(400).json({ error: 'Apna naam likho' });
+  }
+  let phone = row.phone || null;
+  if (req.body && 'phone' in req.body) {
+    const p = cleanPhone(req.body.phone);
+    if (p === false) return res.status(400).json({ error: 'Phone number sahi likho' });
+    phone = p || null;
+  }
+  qSetProfile.run(name, phone, req.account.id);
+  res.json({ ok: true, account: publicAccount(qAccountById.get(req.account.id)) });
+});
+
+app.put('/api/auth/pubkey', requireAuth, (req, res) => {
+  const pk = req.body && req.body.pubKey;
+  const raw = typeof pk === 'string' ? pk : (pk ? JSON.stringify(pk) : '');
+  let jwk = null;
+  try { jwk = JSON.parse(raw); } catch { /* invalid */ }
+  if (!jwk || jwk.kty !== 'RSA' || !jwk.n || !jwk.e || raw.length > 4000) {
+    return res.status(400).json({ error: 'Public key sahi nahi hai' });
+  }
+  qSetPubKey.run(raw, req.account.id);
+  res.json({ ok: true });
+});
+
+// Profile photo: small image stored against the account (metadata, never
+// message content). Hard cap 300KB; type sniffed from magic bytes.
+const AVATAR_MAX = 300 * 1024;
+app.put('/api/auth/avatar', requireAuth, (req, res) => {
+  let data = String((req.body && req.body.data) || '');
+  const m = data.match(/^data:(image\/[a-z+]+);base64,([\s\S]*)$/);
+  if (m) data = m[2];
+  if (!data) return res.status(400).json({ error: 'Photo nahi mili' });
+  let buf;
+  try { buf = Buffer.from(data, 'base64'); } catch { return res.status(400).json({ error: 'Photo sahi nahi hai' }); }
+  if (!buf.length) return res.status(400).json({ error: 'Photo sahi nahi hai' });
+  if (buf.length > AVATAR_MAX) return res.status(400).json({ error: 'Photo 300KB se bari hai — choti photo chuno' });
+  let mime = 'image/jpeg';
+  if (buf[0] === 0x89 && buf[1] === 0x50) mime = 'image/png';
+  else if (buf.length > 12 && buf.toString('ascii', 0, 4) === 'RIFF' && buf.toString('ascii', 8, 12) === 'WEBP') mime = 'image/webp';
+  else if (!(buf[0] === 0xff && buf[1] === 0xd8)) return res.status(400).json({ error: 'Sirf JPEG / PNG / WebP photo chalegi' });
+  qSetAvatar.run(buf, mime, req.account.id);
+  const row = qAccountById.get(req.account.id);
+  res.json({ ok: true, avatarVer: row.avatarVer, hasAvatar: true });
+});
+
+app.get('/api/users/:id/avatar', requireAuth, (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: 'bad id' });
+  const row = qGetAvatar.get(id);
+  if (!row || !row.avatar) return res.status(404).json({ error: 'Photo nahi hai' });
+  res.set('Content-Type', row.avatarMime || 'image/jpeg');
+  res.set('Cache-Control', 'private, no-cache');
+  res.send(Buffer.from(row.avatar));
+});
+
+app.get('/api/users/:id/pubkey', requireAuth, (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: 'bad id' });
+  const row = qAccountById.get(id);
+  if (!row) return res.status(404).json({ error: 'User nahi mila' });
+  let pubKey = null;
+  try { pubKey = row.pubKey ? JSON.parse(row.pubKey) : null; } catch { pubKey = null; }
+  res.json({ ok: true, pubKey });
+});
+
+// --------------------------------------------- v3: search / contacts ---
+function userSearchShape(r, myId) {
+  let pubKey = null;
+  try { pubKey = r.pubKey ? JSON.parse(r.pubKey) : null; } catch { pubKey = null; }
+  return {
+    id: r.id, name: r.name, email: r.email, phone: r.phone || null,
+    hasAvatar: !!r.hasAvatar, avatarVer: r.avatarVer || 0,
+    hasPubKey: !!pubKey, pubKey,
+    isContact: !!qIsContact.get(myId, r.id),
+    requestPending: !!qPendingBetween.get(myId, r.id, r.id, myId),
+  };
+}
+app.get('/api/users/search', requireAuth, (req, res) => {
+  const q = String(req.query.q || '').trim();
+  if (q.length < 2) return res.json({ ok: true, users: [] });
+  const me = req.account.id;
+  const like = '%' + q.toLowerCase().replace(/[%_]/g, '') + '%';
+  const byId = new Map();
+  for (const r of qSearchUsers.all(me, like, like)) byId.set(r.id, r);
+  const digits = q.replace(/\D/g, '');
+  if (digits.length >= 3) {
+    for (const r of qPhoneUsers.all(me)) {
+      const pd = String(r.phone || '').replace(/\D/g, '');
+      if (pd && pd.includes(digits)) byId.set(r.id, r);
+    }
+  }
+  res.json({ ok: true, users: [...byId.values()].slice(0, 20).map((r) => userSearchShape(r, me)) });
+});
+
+// Contact request: `envelope` is the DM room code encrypted with the
+// recipient's RSA public key — the server only stores the ciphertext blob.
+app.post('/api/contacts/request', requireAuth, (req, res) => {
+  const me = req.account.id;
+  const toId = Number(req.body && req.body.toId);
+  const envelope = String((req.body && req.body.envelope) || '');
+  if (!Number.isInteger(toId)) return res.status(400).json({ error: 'User sahi nahi hai' });
+  if (toId === me) return res.status(400).json({ error: 'Khud ko add nahi kar sakte' });
+  if (!qAccountById.get(toId)) return res.status(404).json({ error: 'User nahi mila' });
+  if (!envelope || envelope.length < 10 || envelope.length > 4096) {
+    return res.status(400).json({ error: 'Request data sahi nahi hai' });
+  }
+  if (qIsContact.get(me, toId)) return res.status(409).json({ error: 'Ye pehle se tumhara contact hai' });
+  if (qPendingBetween.get(me, toId, toId, me)) {
+    return res.status(409).json({ error: 'Request pehle se pending hai' });
+  }
+  const info = qAddRequest.run(me, toId, envelope, Date.now());
+  sendToAccount(toId, { type: 'contact-request', fromId: me, fromName: req.account.name });
+  res.json({ ok: true, requestId: Number(info.lastInsertRowid) });
+});
+
+app.get('/api/contacts/requests', requireAuth, (req, res) => {
+  const me = req.account.id;
+  const incoming = qIncomingReqs.all(me).map((r) => ({
+    id: r.id, fromId: r.fromId, fromName: r.fromName, fromEmail: r.fromEmail,
+    fromPhone: r.fromPhone || null, hasAvatar: !!r.fromHasAvatar,
+    avatarVer: r.fromAvatarVer || 0, envelope: r.envelope, createdAt: r.createdAt,
+  }));
+  const outgoing = qOutgoingReqs.all(me).map((r) => ({
+    id: r.id, toId: r.toId, toName: r.toName, createdAt: r.createdAt,
+  }));
+  res.json({ ok: true, incoming, outgoing });
+});
+
+app.post('/api/contacts/respond', requireAuth, (req, res) => {
+  const me = req.account.id;
+  const requestId = Number(req.body && req.body.requestId);
+  const accept = !!(req.body && req.body.accept);
+  const r = Number.isInteger(requestId) ? qGetRequest.get(requestId) : null;
+  if (!r) return res.status(404).json({ error: 'Request nahi mili' });
+  if (r.to_id !== me) return res.status(403).json({ error: 'Ye request tumhare liye nahi hai' });
+  if (r.status !== 'pending') return res.status(400).json({ error: 'Request pehle hi handle ho chuki hai' });
+  if (accept) {
+    // dmRoomId is a SHA-256 hash of the DM code — NOT the code itself,
+    // so the server never holds anything that can derive the E2E key.
+    const dmRoomId = String((req.body && req.body.dmRoomId) || '');
+    if (!/^[0-9a-f]{16,64}$/i.test(dmRoomId)) {
+      return res.status(400).json({ error: 'DM room id sahi nahi hai' });
+    }
+    const now = Date.now();
+    qAddContact.run(me, r.from_id, dmRoomId, now);
+    qAddContact.run(r.from_id, me, dmRoomId, now);
+    qSetReqStatus.run('accepted', r.id);
+  } else {
+    qSetReqStatus.run('declined', r.id);
+  }
+  sendToAccount(r.from_id, { type: 'contacts-changed' });
+  res.json({ ok: true });
+});
+
+app.get('/api/contacts', requireAuth, (req, res) => {
+  const me = req.account.id;
+  const contacts = qMyContacts.all(me).map((r) => {
+    const p = presenceOf(r.contactId);
+    return {
+      contactId: r.contactId, name: r.name, email: r.email, phone: r.phone || null,
+      hasAvatar: !!r.hasAvatar, avatarVer: r.avatarVer || 0, dmRoomId: r.dmRoomId,
+      online: p.online, lastSeen: p.lastSeen || r.lastSeen || 0,
+    };
+  });
+  res.json({ ok: true, contacts });
+});
+
+// Dashboard helper: last message (ciphertext) + unread count for one room.
+app.get('/api/rooms/:code/last', requireAuth, (req, res) => {
+  const code = cleanCode(req.params.code);
+  if (!code) return res.status(400).json({ error: 'Code sahi nahi hai' });
+  const now = Date.now();
+  const since = Number(req.query.since) || 0;
+  const meUser = cleanUserId(req.query.me) || '';
+  const row = qLastMsg.get(code, now);
+  const cnt = qCountAfter.get(code, since, meUser, now);
+  res.json({ ok: true, msg: row ? rowToMsg(row) : null, unread: cnt ? cnt.n : 0 });
 });
 
 // ICE config (STUN default, TURN via env) + VAPID public key for push subscribe.
@@ -427,6 +706,97 @@ function kickDuplicate(room, userId) {
   }
 }
 
+// ------------------------------------------------- v3: presence ------
+// Account-level presence: accountId -> live authed sockets. A contact is
+// "online" while at least one of their sockets is connected; lastSeen is
+// stamped (memory + DB) when the final socket goes away.
+const accountSockets = new Map();   // accountId -> Set<ws>
+const accountLastSeen = new Map();  // accountId -> ts
+function presenceOf(accountId) {
+  const set = accountSockets.get(accountId);
+  let lastSeen = accountLastSeen.get(accountId) || 0;
+  if (!lastSeen) {
+    const row = qAccountById.get(accountId);
+    lastSeen = row ? (row.lastSeen || 0) : 0;
+    if (lastSeen) accountLastSeen.set(accountId, lastSeen);
+  }
+  return { online: !!(set && set.size), lastSeen };
+}
+function sendToAccount(accountId, obj) {
+  const set = accountSockets.get(accountId);
+  if (!set) return;
+  const raw = JSON.stringify(obj);
+  for (const s of set) {
+    if (s.readyState === 1) { try { s.send(raw); } catch {} }
+  }
+}
+function pushPresence(accountId) {
+  const p = presenceOf(accountId);
+  const evt = { type: 'presence', contactId: accountId, online: p.online, lastSeen: p.lastSeen };
+  for (const r of qContactOwners.all(accountId)) sendToAccount(r.owner_id, evt);
+}
+function trackConnect(ws) {
+  if (!ws.accountId) return;
+  let set = accountSockets.get(ws.accountId);
+  const wasOnline = !!(set && set.size);
+  if (!set) { set = new Set(); accountSockets.set(ws.accountId, set); }
+  set.add(ws);
+  if (!wasOnline) pushPresence(ws.accountId);
+}
+function trackDisconnect(ws) {
+  if (!ws.accountId) return;
+  const set = accountSockets.get(ws.accountId);
+  if (!set) return;
+  set.delete(ws);
+  if (!set.size) {
+    accountSockets.delete(ws.accountId);
+    const now = Date.now();
+    accountLastSeen.set(ws.accountId, now);
+    qTouchAccount.run(now, ws.accountId);
+    pushPresence(ws.accountId);
+  }
+}
+
+// Shared join flow. allowCreate (DMs) registers a fresh code on first use;
+// plain joins keep the v1 rule — unknown codes are rejected.
+function joinRoom(ws, m, allowCreate) {
+  const userId = cleanUserId(m.userId);
+  const code = cleanCode(m.roomCode);
+  if (!userId) return ws.send(JSON.stringify({ type: 'error', message: 'Identity missing hai.' }));
+  let room = code && getRoom(code);
+  if (!room) {
+    if (!allowCreate || !code) {
+      ws.send(JSON.stringify({ type: 'error', message: 'Room code galat hai. Code dobara check karo.' }));
+      return;
+    }
+    room = { peers: new Map() };
+    rooms.set(code, room);
+  }
+  leaveRoom(ws);
+  kickDuplicate(room, userId);
+  const name = cleanName(m.name), avatar = cleanAvatar(m.avatar);
+  room.peers.set(userId, { ws, name, avatar });
+  ws.roomCode = code; ws.userId = userId;
+  const now = Date.now();
+  qUpsertUser.run(userId, name, avatar, now);
+  qMember.run(code, userId, now);
+
+  const peers = [...room.peers.entries()]
+    .filter(([uid]) => uid !== userId)
+    .map(([uid, p]) => ({ id: uid, name: p.name, avatar: p.avatar, online: true }));
+  const members = qMembers.all(code).map((r) => ({
+    userId: r.userId, name: r.name, avatar: r.avatar,
+    online: room.peers.has(r.userId),
+    lastSeen: room.peers.has(r.userId) ? now : r.lastSeen,
+  }));
+  const history = qHistory.all(code, now).reverse().map(rowToMsg);
+  ws.send(JSON.stringify({
+    type: 'joined', roomCode: code, peerId: userId, peers, members, history,
+    reactions: roomReactions(code), roomState: roomState(code),
+  }));
+  broadcast(room, { type: 'peer-joined', id: userId, name, avatar }, userId);
+}
+
 wss.on('connection', (ws) => {
   ws.authed = false;
   ws.accountId = null;
@@ -452,6 +822,7 @@ wss.on('connection', (ws) => {
         ws.accountId = acc.id;
         clearTimeout(authTimer);
         ws.send(JSON.stringify({ type: 'auth-ok', account: acc }));
+        trackConnect(ws);
         return;
       }
       ws.send(JSON.stringify({ type: 'auth-error', message: 'Pehle login karo.' }));
@@ -480,40 +851,9 @@ wss.on('connection', (ws) => {
     }
 
     // ---------------------------------------------------------- join ---
-    if (m.type === 'join') {
-      const userId = cleanUserId(m.userId);
-      const code = cleanCode(m.roomCode);
-      if (!userId) return ws.send(JSON.stringify({ type: 'error', message: 'Identity missing hai.' }));
-      const room = code && getRoom(code);
-      if (!room) {
-        ws.send(JSON.stringify({ type: 'error', message: 'Room code galat hai. Code dobara check karo.' }));
-        return;
-      }
-      leaveRoom(ws);
-      kickDuplicate(room, userId);
-      const name = cleanName(m.name), avatar = cleanAvatar(m.avatar);
-      room.peers.set(userId, { ws, name, avatar });
-      ws.roomCode = code; ws.userId = userId;
-      const now = Date.now();
-      qUpsertUser.run(userId, name, avatar, now);
-      qMember.run(code, userId, now);
-
-      const peers = [...room.peers.entries()]
-        .filter(([uid]) => uid !== userId)
-        .map(([uid, p]) => ({ id: uid, name: p.name, avatar: p.avatar, online: true }));
-      const members = qMembers.all(code).map((r) => ({
-        userId: r.userId, name: r.name, avatar: r.avatar,
-        online: room.peers.has(r.userId),
-        lastSeen: room.peers.has(r.userId) ? now : r.lastSeen,
-      }));
-      const history = qHistory.all(code, now).reverse().map(rowToMsg);
-      ws.send(JSON.stringify({
-        type: 'joined', roomCode: code, peerId: userId, peers, members, history,
-        reactions: roomReactions(code), roomState: roomState(code),
-      }));
-      broadcast(room, { type: 'peer-joined', id: userId, name, avatar }, userId);
-      return;
-    }
+    if (m.type === 'join') { joinRoom(ws, m, false); return; }
+    // DM rooms spring into existence under their agreed code (contact flow).
+    if (m.type === 'create-room-with-code') { joinRoom(ws, m, true); return; }
 
     const room = rooms.get(ws.roomCode);
     const me = room && room.peers.get(ws.userId);
@@ -654,7 +994,7 @@ wss.on('connection', (ws) => {
     }
   });
 
-  ws.on('close', () => leaveRoom(ws));
+  ws.on('close', () => { leaveRoom(ws); trackDisconnect(ws); });
   ws.on('error', () => {});
 });
 
