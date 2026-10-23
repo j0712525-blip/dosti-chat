@@ -1,5 +1,5 @@
 // Dosti Chat — service worker: push notifications + offline cache (PWA).
-const CACHE = 'dosti-v3';
+const CACHE = 'dosti-v4';
 const CORE = ['/', '/index.html', '/manifest.json', '/icon-192.png', '/icon-512.png', '/lock.js'];
 
 self.addEventListener('install', (e) => {

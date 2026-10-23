@@ -150,7 +150,8 @@
   body[data-wall="sunset"] #messages { background: linear-gradient(180deg, #2b1535, #3d1a2e); }
 
   /* ---------- v2: auth screen / rooms list ---------- */
-  #auth-error { color: #ff7b7b; font-size: 14px; min-height: 20px; margin-bottom: 8px; text-align: center; }
+  #welcome-error { color: #ff7b7b; font-size: 14px; min-height: 20px; margin-bottom: 8px; text-align: center; }
+  #welcome-screen { align-items: center; justify-content: center; padding: 24px; overflow-y: auto; }
   .account-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 18px; padding-top: 16px; border-top: 1px solid #2b3650; font-size: 14px; }
   .account-row .who-acc { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .account-row button { flex-shrink: 0; }
@@ -296,19 +297,16 @@
   </div>
 </div>
 
-<!-- AUTH (email login) -->
-<div id="auth-screen" class="screen">
+<!-- WELCOME (v4: name-only entry — no email, no password) -->
+<div id="welcome-screen" class="screen">
   <div class="card">
     <h1>💬 Dosti Chat</h1>
-    <p>Apni private chat — pehle apne account se login karo. Tumhare rooms har device par wapas aa jayenge. 🔒</p>
-    <div id="auth-name-wrap" style="display:none">
-      <input id="auth-name" placeholder="Tumhara naam" maxlength="30" autocomplete="name">
-    </div>
-    <input id="auth-email" type="email" placeholder="Email" autocomplete="email">
-    <input id="auth-pass" type="password" placeholder="Password (kam se kam 6 characters)" autocomplete="current-password">
-    <div id="auth-error"></div>
-    <button class="btn btn-primary" id="auth-submit">Login</button>
-    <button class="btn btn-ghost" id="auth-toggle">Account nahi hai? Register karo</button>
+    <p>Apni private chat — bas apna naam likho aur andar aa jao. Koi email, koi password nahi. 🔒</p>
+    <span class="avatar-label">Apna avatar chuno:</span>
+    <div class="avatar-grid" id="welcome-avatar-grid"></div>
+    <input id="welcome-name" placeholder="Tumhara naam" maxlength="30" autocomplete="name">
+    <div id="welcome-error"></div>
+    <button class="btn btn-primary" id="welcome-go">🚀 Andar chalo</button>
   </div>
 </div>
 
@@ -392,10 +390,6 @@
       <input id="profile-phone" placeholder="+92 300 1234567" maxlength="20" inputmode="tel" autocomplete="off">
       <div id="profile-msg"></div>
       <button class="btn btn-primary" id="profile-save">Save karo</button>
-      <div class="account-row">
-        <span class="who-acc">👤 <span id="account-email">—</span></span>
-        <button class="icon-btn" id="logout-btn">Logout</button>
-      </div>
 
     <div class="lock-settings">
       <div class="lock-row"><span>🔒 App Lock</span><span class="st" id="lock-state">Off</span></div>
@@ -551,19 +545,27 @@
   let myAvatar = localStorage.getItem('dosti_avatar') || '😎';
 
   const AVATARS = ['😎','🥀','🔥','🌙','⭐','🦁','🐼','🐯','🌹','💎','👑','🎧'];
-  const avatarGrid = $('avatar-grid');
-  AVATARS.forEach((a) => {
-    const b = document.createElement('button');
-    b.textContent = a;
-    if (a === myAvatar) b.classList.add('sel');
-    b.onclick = () => {
-      myAvatar = a;
-      localStorage.setItem('dosti_avatar', a);
-      avatarGrid.querySelectorAll('button').forEach((x) => x.classList.remove('sel'));
-      b.classList.add('sel');
-    };
-    avatarGrid.appendChild(b);
-  });
+  function paintAvatarGrids() {
+    document.querySelectorAll('.avatar-grid').forEach((g) => {
+      g.querySelectorAll('button').forEach((x) => x.classList.toggle('sel', x.textContent === myAvatar));
+    });
+  }
+  function buildAvatarGrid(el) {
+    if (!el) return;
+    AVATARS.forEach((a) => {
+      const b = document.createElement('button');
+      b.textContent = a;
+      b.onclick = () => {
+        myAvatar = a;
+        localStorage.setItem('dosti_avatar', a);
+        paintAvatarGrids();
+      };
+      el.appendChild(b);
+    });
+  }
+  buildAvatarGrid($('avatar-grid'));
+  buildAvatarGrid($('welcome-avatar-grid'));
+  paintAvatarGrids();
   $('name-input').value = myName;
 
   /* ================= app lock ================= */
@@ -606,7 +608,7 @@
     if (ok) {
       pinFails = 0;
       hideLock();
-      if (!appStarted) { appStarted = true; startApp(); }
+      proceedBoot();   // first unlock continues boot; later unlocks just hide the lock
       return;
     }
     pinFails++;
@@ -694,8 +696,7 @@
   /* ================= v2: auth session / vault / my rooms ================= */
   let authToken = localStorage.getItem('dosti_token') || null;
   let account = null;
-  let vaultKey = null;                    // derived from password — never the password itself
-  let authMode = 'login';
+  let vaultKey = null;                    // random device key (localStorage) — never leaves the device
   let myRooms = loadLocalRooms();         // [{code, name}]
   // feature state
   let reactionsMap = new Map();           // msgId -> Map(emoji -> Set(userId))
@@ -758,12 +759,22 @@
   }
   function renderRoomsList() { renderDashboard(); }
 
-  /* ---------- vault: rooms encrypted with a password-derived key ---------- */
-  async function deriveVaultKey(password) {
-    const km = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveKey']);
-    return crypto.subtle.deriveKey(
-      { name: 'PBKDF2', salt: new TextEncoder().encode('dosti-vault-v1'), iterations: 100000, hash: 'SHA-256' },
-      km, { name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
+  /* ---------- vault: rooms encrypted with a random device key ----------
+     v4: the key is 32 random bytes generated once on this device and kept
+     in localStorage ('dosti_vaultkey'). The on-device rooms list stays the
+     source of truth; the server vault is an encrypted backup of it. */
+  const VAULTKEY_LS = 'dosti_vaultkey';
+  async function setupVaultKey() {
+    if (vaultKey) return;
+    try {
+      let b64 = localStorage.getItem(VAULTKEY_LS);
+      if (!b64) {
+        b64 = b64e(crypto.getRandomValues(new Uint8Array(32)).buffer);
+        localStorage.setItem(VAULTKEY_LS, b64);
+      }
+      vaultKey = await crypto.subtle.importKey('raw', b64d(b64),
+        { name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
+    } catch {}
   }
   async function vaultEncrypt(obj) {
     const iv = crypto.getRandomValues(new Uint8Array(12));
@@ -787,8 +798,11 @@
       });
     } catch {}
   }
-  // After a password login/register: pull the vault, merge with local rooms
-  // (this is also the one-time import of pre-account local rooms), push union back.
+  // Once identity is ready: pull the vault, merge with local rooms, push
+  // the union back. Migration note: a v3 vault blob was encrypted with a
+  // password-derived key and will NOT decrypt under the device key — the
+  // decrypt simply fails, the blob is ignored, and vaultSave() below
+  // re-encrypts the (authoritative) local rooms list under the device key.
   async function vaultLoadMerge() {
     if (!vaultKey || !authToken) return;
     try {
@@ -810,31 +824,69 @@
     await loadKeysFromVault();
     vaultSave();
   }
-  async function restoreVaultKey() {
-    try {
-      const b = sessionStorage.getItem('dosti_vault_key');
-      if (b) vaultKey = await crypto.subtle.importKey('raw', b64d(b), { name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
-    } catch {}
-  }
-
-  /* ---------- auth screen ---------- */
-  function showAuth() {
-    $('auth-screen').classList.add('active');
+  /* ---------- v4: name-only identity (email login removed) ----------
+     The device holds everything in localStorage: session token, account
+     id, display name, and the random vault key. A returning v3 token is
+     validated silently (that account — contacts/DMs included — is kept);
+     only a device with no valid token and no saved name sees the
+     one-time welcome screen. */
+  function showWelcome() {
+    $('welcome-screen').classList.add('active');
     $('join-screen').classList.remove('active');
     $('room-screen').classList.remove('active');
+    $('welcome-name').value = myName || '';
+    $('welcome-error').textContent = '';
   }
-  function setAuthMode(mode) {
-    authMode = mode;
-    $('auth-name-wrap').style.display = mode === 'register' ? '' : 'none';
-    $('auth-submit').textContent = mode === 'register' ? 'Account banao' : 'Login';
-    $('auth-toggle').textContent = mode === 'register' ? 'Pehle se account hai? Login karo' : 'Account nahi hai? Register karo';
-    $('auth-error').textContent = '';
+  async function createAnon(name) {
+    const r = await fetch('/api/auth/anon', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || 'anon fail');
+    authToken = j.token; account = j.account;
+    localStorage.setItem('dosti_token', authToken);
+    localStorage.setItem('dosti_account_id', String(account.id));
+    myName = name;
+    localStorage.setItem('dosti_name', myName);
+    $('name-input').value = myName;
+    return true;
   }
-  async function afterAuth() {
-    $('account-email').textContent = account ? account.email : '';
-    $('auth-screen').classList.remove('active');
+  async function resolveIdentity() {
+    await setupVaultKey();
+    if (authToken) {
+      try {
+        const r = await fetch('/api/auth/me', { headers: authHeaders() });
+        if (r.ok) {
+          const j = await r.json();
+          account = j.account;
+          localStorage.setItem('dosti_account_id', String(account.id));
+          return true;   // existing (possibly v3) account kept silently
+        }
+      } catch {}
+      localStorage.removeItem('dosti_token');
+      authToken = null; account = null;
+    }
+    // No valid token: if this device already knows a name (returning user
+    // whose server session expired), re-enter with it — no typing needed.
+    if (myName) {
+      try { return await createAnon(myName); } catch { return false; }
+    }
+    return false;
+  }
+  let identityPromise = null;
+  let bootProceeded = false;
+  async function proceedBoot() {
+    if (bootProceeded) return;
+    bootProceeded = true;
+    let ok = false;
+    try { ok = await identityPromise; } catch {}
+    if (ok) enterApp(); else showWelcome();
+  }
+  async function enterApp() {
+    $('welcome-screen').classList.remove('active');
     $('join-screen').classList.add('active');
-    await restoreVaultKey();
+    await setupVaultKey();
     if (account && !myName) {
       myName = account.name || '';
       localStorage.setItem('dosti_name', myName);
@@ -844,43 +896,21 @@
     await ensurePubKey();
     refreshContacts();
     renderRoomsList();
-    if (localStorage.getItem(PIN_KEY)) {
-      appStarted = false;
-      showLock();   // unlock → startApp()
-    } else {
-      appStarted = true;
-      startApp();
-    }
+    startApp();
   }
-  $('auth-toggle').onclick = () => setAuthMode(authMode === 'login' ? 'register' : 'login');
-  $('auth-submit').onclick = async () => {
-    const email = $('auth-email').value.trim();
-    const password = $('auth-pass').value;
-    const name = $('auth-name').value.trim();
-    $('auth-error').textContent = '';
+  $('welcome-go').onclick = async () => {
+    const name = $('welcome-name').value.trim();
+    $('welcome-error').textContent = '';
+    if (!name) { $('welcome-error').textContent = 'Apna naam likho'; return; }
     try {
-      const body = authMode === 'register' ? { name, email, password } : { email, password };
-      const r = await fetch('/api/auth/' + authMode, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
-      });
-      const j = await r.json().catch(() => ({}));
-      if (!r.ok) { $('auth-error').textContent = j.error || 'Kuch galat ho gaya'; return; }
-      authToken = j.token; account = j.account;
-      localStorage.setItem('dosti_token', authToken);
-      vaultKey = await deriveVaultKey(password);
-      try {
-        const raw = await crypto.subtle.exportKey('raw', vaultKey);
-        sessionStorage.setItem('dosti_vault_key', b64e(raw));
-      } catch {}
-      $('auth-pass').value = '';
-      await vaultLoadMerge();
-      afterAuth();
-    } catch { $('auth-error').textContent = 'Server se rabta nahi ho raha'; }
+      await createAnon(name);
+      enterApp();
+    } catch { $('welcome-error').textContent = 'Server se rabta nahi ho raha — dobara try karo'; }
   };
-  $('auth-pass').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('auth-submit').click(); });
-  $('auth-email').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('auth-submit').click(); });
+  $('welcome-name').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('welcome-go').click(); });
 
   function startApp() {
+    appStarted = true;
     applyTheme();
     renderRoomsList();
     renderLockSettings();
@@ -1350,8 +1380,9 @@
       refreshContacts();
       return;
     } else if (m.type === 'auth-error') {
+      // Session is gone (e.g. server restarted) — dropping the dead token
+      // is enough: boot re-enters with the saved on-device name.
       localStorage.removeItem('dosti_token');
-      sessionStorage.removeItem('dosti_vault_key');
       location.reload();
       return;
     } else if (m.type === 'room-created' || m.type === 'joined') {
@@ -2049,8 +2080,11 @@
     await uploadPubKey(pubJwk);
     vaultSave();
   }
-  // Runs after login: upload the vault keypair's public half if the server
-  // lacks it, or mint a fresh pair (only possible with the vault open).
+  // Runs once identity is ready: upload the vault keypair's public half if
+  // the server lacks it. If we hold NO private key (fresh device, or a v4
+  // migration whose old vault is unrecoverable), mint a fresh pair and
+  // upload its public half — existing DMs use room codes, never this key,
+  // so rotating it breaks nothing that already exists.
   async function ensurePubKey() {
     if (!authToken) return;
     try {
@@ -2063,7 +2097,7 @@
           await uploadPubKey(myKeys.pubJwk);
         }
         if (account) account.hasPubKey = true;
-      } else if (!serverPub && vaultKey) {
+      } else if (vaultKey) {
         await generateKeys();
         if (account) account.hasPubKey = true;
       }
@@ -2219,7 +2253,7 @@
       const main = document.createElement('div'); main.className = 'row-main';
       const nm = document.createElement('div'); nm.className = 'row-name'; nm.textContent = r.fromName;
       const sub = document.createElement('div'); sub.className = 'row-sub';
-      sub.textContent = r.fromEmail + (r.fromPhone ? ' • ' + r.fromPhone : '');
+      sub.textContent = [r.fromEmail, r.fromPhone].filter(Boolean).join(' • ') || 'Dosti Chat user';
       main.appendChild(nm); main.appendChild(sub);
       card.appendChild(main);
       const btns = document.createElement('div'); btns.className = 'req-btns';
@@ -2370,7 +2404,7 @@
   /* ----- contact requests ----- */
   async function acceptRequest(r) {
     if (!myKeys) {
-      alert('DM kholne ke liye pehle is device par password se login karo — private key wahan mehfooz hai 🔑');
+      alert('DM ki private key is device par nahi mili — app reload karke dobara try karo 🔑');
       return;
     }
     try {
@@ -2432,7 +2466,7 @@
         const main = document.createElement('div'); main.className = 'row-main';
         const nm = document.createElement('div'); nm.className = 'row-name'; nm.textContent = u.name;
         const sub = document.createElement('div'); sub.className = 'row-sub';
-        sub.textContent = u.email + (u.phone ? ' • ' + u.phone : '');
+        sub.textContent = [u.email, u.phone].filter(Boolean).join(' • ');
         main.appendChild(nm); main.appendChild(sub);
         row.appendChild(main);
         const b = document.createElement('button'); b.className = 'icon-btn';
@@ -2477,6 +2511,11 @@
       const j = await r.json().catch(() => ({}));
       if (!r.ok) { msgEl.style.color = '#ff7b7b'; msgEl.textContent = j.error || 'Save nahi ho saka'; return; }
       account = j.account;
+      if (account && account.name) {
+        myName = account.name;
+        localStorage.setItem('dosti_name', myName);
+        $('name-input').value = myName;
+      }
       if (pendingAvatarData) {
         const r2 = await fetch('/api/auth/avatar', {
           method: 'PUT', headers: authHeaders({ 'Content-Type': 'application/json' }),
@@ -2528,7 +2567,7 @@
       startGroupCall(useVideo);
     };
 
-    /* ----- v2 wiring: search / settings / pin bar / logout ----- */
+    /* ----- v2 wiring: search / settings / pin bar ----- */
     $('search-btn').onclick = () => {
       const bar = $('search-bar');
       bar.classList.toggle('show');
@@ -2557,12 +2596,6 @@
     $('pin-bar').onclick = () => { if (pinnedMsgId) scrollToMsg(pinnedMsgId); };
     $('pin-unpin').onclick = (e) => { e.stopPropagation(); send({ type: 'pin', id: null }); };
 
-    $('logout-btn').onclick = async () => {
-      try { await fetch('/api/auth/logout', { method: 'POST', headers: authHeaders() }); } catch {}
-      localStorage.removeItem('dosti_token');
-      sessionStorage.removeItem('dosti_vault_key');
-      location.reload();
-    };
     $('lock-now-btn').onclick = () => {
       if (!localStorage.getItem(PIN_KEY)) { alert('Pehle App Lock mein PIN set karo 🔒'); return; }
       pinFails = 0;
@@ -2633,23 +2666,13 @@
     $('profile-save').onclick = saveProfile;
   }
 
-  /* ================= boot (auth first, then PIN gate, then app) ================= */
-  async function boot() {
+  /* ================= boot (identity resolves silently; PIN gate first if set) ================= */
+  function boot() {
     applyTheme();
-    setAuthMode('login');
     renderRoomsList();
-    if (!authToken) { showAuth(); return; }
-    try {
-      const r = await fetch('/api/auth/me', { headers: authHeaders() });
-      if (!r.ok) throw new Error('no session');
-      const j = await r.json();
-      account = j.account;
-      afterAuth();
-    } catch {
-      localStorage.removeItem('dosti_token');
-      authToken = null;
-      showAuth();
-    }
+    identityPromise = resolveIdentity();
+    if (localStorage.getItem(PIN_KEY)) showLock();   // unlock → proceedBoot()
+    else proceedBoot();
   }
   boot();
 })();
