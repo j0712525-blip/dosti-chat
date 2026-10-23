@@ -609,6 +609,77 @@ async function encText(key, t) {
   check('v3: contacts list shows online=false + lastSeen', !!cOff && cOff.online === false && cOff.lastSeen > 0);
   aP.close();
 
+  // ================= v4: name-only (anon) entry — no email, no password =================
+  const anonRes = await jfetch('POST', '/api/auth/anon', null, { name: 'Anon One' });
+  check('v4: anon create ok — token + account, no real email',
+    anonRes.status === 200 && typeof anonRes.j.token === 'string' && anonRes.j.token.length >= 32
+    && anonRes.j.account.name === 'Anon One' && anonRes.j.account.email === null);
+  const TOK_A1 = anonRes.j.token, A1ID = anonRes.j.account.id;
+  check('v4: anon without a name rejected', (await jfetch('POST', '/api/auth/anon', null, {})).status === 400);
+  check('v4: anon token opens gated /config', (await jfetch('GET', '/config', TOK_A1)).status === 200);
+  const meA1 = await jfetch('GET', '/api/auth/me', TOK_A1);
+  check('v4: anon /me returns the same account',
+    meA1.status === 200 && meA1.j.account.id === A1ID && meA1.j.account.name === 'Anon One');
+  const wsA1 = await connect(TOK_A1);   // connect() asserts the WS auth-ok handshake
+  wsA1.send({ type: 'create-room', userId: 'uAnon1', name: 'Anon One', avatar: '😎' });
+  const a1Room = await wsA1.next();
+  check('v4: anon WS accepted + can create a room',
+    a1Room.type === 'room-created' && /^[A-Z0-9]{6}$/.test(a1Room.roomCode));
+  wsA1.close();
+
+  // anon profile / pubkey / avatar updates all work off the anon token
+  const profA1 = await jfetch('PUT', '/api/auth/profile', TOK_A1, { name: 'Anon One', phone: '+92 321-5556677' });
+  check('v4: anon profile update (phone) works',
+    profA1.status === 200 && profA1.j.account.phone === '+923215556677');
+  const anon2 = await jfetch('POST', '/api/auth/anon', null, { name: 'Anon Two' });
+  const TOK_A2 = anon2.j.token, A2ID = anon2.j.account.id;
+  check('v4: second anon create ok (distinct account)', anon2.status === 200 && A2ID !== A1ID);
+  const { publicKey: pubA2, privateKey: privA2 } = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
+  const pubJwkA2 = pubA2.export({ format: 'jwk' });
+  check('v4: anon pubkey PUT ok', (await jfetch('PUT', '/api/auth/pubkey', TOK_A2, { pubKey: pubJwkA2 })).status === 200);
+  check('v4: anon avatar PUT ok',
+    (await jfetch('PUT', '/api/auth/avatar', TOK_A2, { data: jpgBytes.toString('base64') })).status === 200);
+  check('v4: search by name finds an anon account',
+    ((await jfetch('GET', '/api/users/search?q=' + encodeURIComponent('Anon Two'), TOK_A1)).j.users || [])
+      .some((u) => u.id === A2ID));
+
+  // two anon accounts: contact-request → accept → DM messages, end to end
+  const dmCode4 = 'DMV4Z2';
+  const env4 = crypto.publicEncrypt(
+    { key: pubA2, padding: crypto.constants.RSA_PKCS1_OAEP_PADDING, oaepHash: 'sha256' },
+    Buffer.from(dmCode4, 'utf8')).toString('base64');
+  const req4 = await jfetch('POST', '/api/contacts/request', TOK_A1, { toId: A2ID, envelope: env4 });
+  check('v4: anon contact request created', req4.status === 200 && typeof req4.j.requestId === 'number');
+  const in4 = ((await jfetch('GET', '/api/contacts/requests', TOK_A2)).j.incoming || [])
+    .find((r) => r.id === req4.j.requestId);
+  const dec4 = crypto.privateDecrypt(
+    { key: privA2, padding: crypto.constants.RSA_PKCS1_OAEP_PADDING, oaepHash: 'sha256' },
+    Buffer.from(in4.envelope, 'base64')).toString('utf8');
+  const dmRoomId4 = crypto.createHash('sha256').update(dec4).digest('hex');
+  check('v4: anon accept ok',
+    (await jfetch('POST', '/api/contacts/respond', TOK_A2, { requestId: req4.j.requestId, accept: true, dmRoomId: dmRoomId4 })).status === 200);
+  check('v4: anon contacts exist both ways',
+    ((await jfetch('GET', '/api/contacts', TOK_A1)).j.contacts || []).some((c) => c.contactId === A2ID)
+    && ((await jfetch('GET', '/api/contacts', TOK_A2)).j.contacts || []).some((c) => c.contactId === A1ID));
+  const dmKey4 = await roomKey(dmCode4);
+  const dA2 = await connect(TOK_A2);
+  dA2.send({ type: 'create-room-with-code', roomCode: dmCode4, userId: 'uAnon2', name: 'Anon Two', avatar: '🥀' });
+  await nextType(dA2, 'joined');
+  const dA1 = await connect(TOK_A1);
+  dA1.send({ type: 'join', roomCode: dmCode4, userId: 'uAnon1', name: 'Anon One', avatar: '😎' });
+  await nextType(dA1, 'joined');
+  const dmCt41 = await encText(dmKey4, 'salam — naam wala login');
+  dA1.send({ type: 'chat', kind: 'text', payload: dmCt41, cid: 'v41' });
+  const dmMsg41 = await nextType(dA2, 'chat');
+  check('v4: anon DM message A1→A2', dmMsg41.payload === dmCt41 && dmMsg41.from === 'uAnon1');
+  await nextType(dA1, 'chat'); // A1's own echo
+  const dmCt42 = await encText(dmKey4, 'jawab bhi aa gaya');
+  dA2.send({ type: 'chat', kind: 'text', payload: dmCt42, cid: 'v42' });
+  const dmMsg42 = await nextType(dA1, 'chat');
+  check('v4: anon DM message A2→A1', dmMsg42.payload === dmCt42 && dmMsg42.from === 'uAnon2');
+  await nextType(dA2, 'chat'); // A2's own echo
+  dA1.close(); dA2.close();
+
   // ---- static assets ----
   const pg = await httpGet('/');
   check('client page served', pg.status === 200 && pg.body.toString().includes('Dosti Chat'));

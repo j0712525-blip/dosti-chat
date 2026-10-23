@@ -256,11 +256,15 @@ function accountForToken(token) {
     hasAvatar: !!s.hasAvatar, avatarVer: s.avatarVer || 0, hasPubKey: !!s.hasPubKey,
   };
 }
+// Anon (v4) accounts carry an internal placeholder email (…@local) that is
+// never a credential and never shown to clients — name-only identities
+// simply have no email.
+function pubEmail(e) { return e && String(e).endsWith('@local') ? null : (e || null); }
 // Public account shape for API responses (never hashes / private material).
 function publicAccount(a) {
   if (!a) return null;
   return {
-    id: a.id, email: a.email, name: a.name, phone: a.phone || null,
+    id: a.id, email: pubEmail(a.email), name: a.name, phone: a.phone || null,
     hasAvatar: !!a.hasAvatar, avatarVer: a.avatarVer || 0, hasPubKey: !!a.hasPubKey,
   };
 }
@@ -342,6 +346,24 @@ app.post('/api/auth/login', async (req, res) => {
     }
     const account = publicAccount(qAccountById.get(acc.id));
     res.json({ ok: true, token: makeSession(acc.id), account });
+  } catch (e) { res.status(500).json({ error: 'Server masla: ' + e.message }); }
+});
+
+// v4: name-only entry. No email, no password — the client just sends a
+// display name and gets a normal account + session token. The account's
+// email is an internal placeholder (…@local) and its password hash is of
+// a random throwaway secret, so the email login route can never sign in
+// as an anon account. Identity therefore lives on the device (the token
+// in localStorage); the token machinery still gates every endpoint/WS.
+app.post('/api/auth/anon', async (req, res) => {
+  try {
+    const name = cleanName(req.body && req.body.name);
+    if (!name || name === 'Guest') return res.status(400).json({ error: 'Apna naam likho' });
+    const email = 'anon-' + crypto.randomBytes(10).toString('hex') + '@local';
+    const { salt, hash } = await hashPassword(crypto.randomBytes(32).toString('hex'));
+    const info = qAddAccount.run(email, name, hash, salt, Date.now(), null);
+    const account = publicAccount(qAccountById.get(Number(info.lastInsertRowid)));
+    res.json({ ok: true, token: makeSession(account.id), account });
   } catch (e) { res.status(500).json({ error: 'Server masla: ' + e.message }); }
 });
 
@@ -451,7 +473,7 @@ function userSearchShape(r, myId) {
   let pubKey = null;
   try { pubKey = r.pubKey ? JSON.parse(r.pubKey) : null; } catch { pubKey = null; }
   return {
-    id: r.id, name: r.name, email: r.email, phone: r.phone || null,
+    id: r.id, name: r.name, email: pubEmail(r.email), phone: r.phone || null,
     hasAvatar: !!r.hasAvatar, avatarVer: r.avatarVer || 0,
     hasPubKey: !!pubKey, pubKey,
     isContact: !!qIsContact.get(myId, r.id),
@@ -499,7 +521,7 @@ app.post('/api/contacts/request', requireAuth, (req, res) => {
 app.get('/api/contacts/requests', requireAuth, (req, res) => {
   const me = req.account.id;
   const incoming = qIncomingReqs.all(me).map((r) => ({
-    id: r.id, fromId: r.fromId, fromName: r.fromName, fromEmail: r.fromEmail,
+    id: r.id, fromId: r.fromId, fromName: r.fromName, fromEmail: pubEmail(r.fromEmail),
     fromPhone: r.fromPhone || null, hasAvatar: !!r.fromHasAvatar,
     avatarVer: r.fromAvatarVer || 0, envelope: r.envelope, createdAt: r.createdAt,
   }));
@@ -540,7 +562,7 @@ app.get('/api/contacts', requireAuth, (req, res) => {
   const contacts = qMyContacts.all(me).map((r) => {
     const p = presenceOf(r.contactId);
     return {
-      contactId: r.contactId, name: r.name, email: r.email, phone: r.phone || null,
+      contactId: r.contactId, name: r.name, email: pubEmail(r.email), phone: r.phone || null,
       hasAvatar: !!r.hasAvatar, avatarVer: r.avatarVer || 0, dmRoomId: r.dmRoomId,
       online: p.online, lastSeen: p.lastSeen || r.lastSeen || 0,
     };
